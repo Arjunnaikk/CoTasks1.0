@@ -5,14 +5,15 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Create from '@/components/Create';
 import CreateTeam from '@/components/CreateTeam';
+import { Button } from "@/components/ui/button";
 import MyTeamCard from '@/components/MyTeamCard';
 import TeamList from '@/components/TeamList';
 import { useRouter } from "next/navigation";
-import { useGetMyTeamQuery, useGetMyTeamTaskQuery } from "@/services/queries";
+import { useGetMyTeamQuery, useGetMyTeamTaskQuery, useGetAssignedQuery} from "@/services/queries";
 import { useDeleteMyTeamTaskMutation } from "@/services/mutations";
 import { Trash2, Menu, ArrowUp, ArrowDown, ArrowRight } from 'lucide-react';
 import EmptyCard from '@/components/EmptyCard';
-import DialogDemo from '@/components/DialogDemo';
+import DialogDemoTeam from '@/components/DialogDemoTeam';
 import SkeletonDemo from "@/components/SkeletonDemo";
 
 const ErrorComponent = ({ error }) => <div>Error: {error?.message || "An error occurred"}</div>;
@@ -24,13 +25,20 @@ const Page = ({ params }) => {
     // Queries
     const { data: myTeamTask, isLoading, error } = useGetMyTeamTaskQuery(session?.user?.email, params.teamId);
     const { data: teamData, isLoading: teamLoading, error: teamError } = useGetMyTeamQuery(session?.user?.email);
-    // const deleteTaskMutation = useDeleteMyTeamTaskMutation();
+    const { data: assignedData, isLoading: teamAssignedLoading, error: teamAssignedError } = useGetAssignedQuery(params.teamId, params.taskId);
+    
     const [task, setTask] = useState(null);
+    const [sortedTasks, setSortedTasks] = useState([]);
+    const [sortDirection, setSortDirection] = useState('desc');
 
     useEffect(() => {
-        if (myTeamTask && params.taskId) {
-            const currentTask = myTeamTask.find(item => item.task_id === parseInt(params.taskId, 10));
-            setTask(currentTask);
+        if (myTeamTask) {
+            setSortedTasks([...myTeamTask]);
+            
+            if (params.taskId) {
+                const currentTask = myTeamTask.find(item => item.task_id === parseInt(params.taskId, 10));
+                setTask(currentTask);
+            }
         }
     }, [myTeamTask, params.taskId]);    
 
@@ -38,25 +46,24 @@ const Page = ({ params }) => {
     if (error || teamError) return <ErrorComponent error={error || teamError} />;
 
     // Handlers
-    console.log("HAAAAA",teamData)
     const handleRoute = (teamTitle, taskId = 10) => {
         router.push(`/mygroups/${teamTitle}/task/${taskId}`);
     };
 
-    const handleDelete = async () => {
-        // if (!task) return;
-        // try {
-        //     await deleteTaskMutation.mutateAsync({
-        //         userMail: session?.user?.email,
-        //         task_id: task.task_id,
-        //     });
-        //     console.log("Task deleted successfully");
-        // } catch (error) {
-        //     console.error("Error deleting task:", error);
-        // }
-        // console.log("hola")
+    const handleSort = () => {
+        const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        setSortDirection(newDirection);
+        
+        const newSortedTasks = [...sortedTasks].sort((a, b) => {
+            if (newDirection === 'asc') {
+                return a.priority - b.priority;
+            } else {
+                return b.priority - a.priority;
+            }
+        });
+        
+        setSortedTasks(newSortedTasks);
     };
-    console.log("LELELELEEL",myTeamTask)
 
     return (
         <>
@@ -82,30 +89,46 @@ const Page = ({ params }) => {
                     </div>
                 </div>
                 <div className='fixed bottom-4'>
-                    <DialogDemo email={session?.user?.email} />
+                    <DialogDemoTeam email={session?.user?.email} />
                 </div>
             </div>
 
             {/* My Page */}
             <div className='h-auto w-auto bg-#09090b m-2 flex flex-col items-start gap-6 pt-[50px]'>
-                {Array.isArray(myTeamTask) && myTeamTask.length > 0 ? (
-                    myTeamTask.map((item, index) => (
-                        <MyTeamCard
-                            myTeamTask={myTeamTask}
-                            key={index}
-                            keye={index}
-                            teamName={params.teamId}
-                            handleClick={() => handleRoute(item.name)}
-                        />
-                    ))
-                ) : (
-                    <EmptyCard />
-                )}
+                <div className="flex items-center gap-2 mx-3">
+                    <Button 
+                        variant="outline" 
+                        onClick={handleSort} 
+                        className="text-black flex items-center gap-2"
+                    >
+                        Sort by Priority 
+                        {sortDirection === 'asc' ? (
+                            <ArrowUp className="h-4 w-4" />
+                        ) : (
+                            <ArrowDown className="h-4 w-4" />
+                        )}
+                    </Button>
+                </div>
+                <div className='h-auto w-auto bg-#09090b m-2 flex flex-col items-start gap-6'>
+                    {Array.isArray(sortedTasks) && sortedTasks.length > 0 ? (
+                        sortedTasks.map((item, index) => (
+                            <MyTeamCard
+                                myTeamTask={sortedTasks}
+                                key={index}
+                                keye={index}
+                                teamName={params.teamId}
+                                handleClick={() => handleRoute(item.name)}
+                            />
+                        ))
+                    ) : (
+                        <EmptyCard />
+                    )}
+                </div>
             </div>
 
             {/* Task Detail */}
             <div className='h-[90.8vh] w-[35vw] rounded-md bg-#09090b top-[55px] left-[10px] sticky m-2 flex flex-col border border-zinc-800'>
-                <div onClick={handleDelete} className='text-white flex justify-between m-1 p-3 cursor-pointer'>
+                <div className='text-white flex justify-between m-1 p-3 cursor-pointer'>
                     <Trash2 />
                     <Menu />
                 </div>
@@ -113,7 +136,10 @@ const Page = ({ params }) => {
                 {task && (
                     <>
                         <div className='flex flex-row p-1 justify-between'>
-                            <h1 className='text-2xl font-semibold text-white flex p-2 items-center'>{task.title}</h1>
+                            <div className="flex flex-row">
+                                <img className='mx-1 my-2 w-[50px] h-[50px]' src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${task.assigner_id}`} alt="" />
+                                <h1 className='text-2xl font-semibold text-white flex p-2 items-center'>{task.title}</h1>
+                            </div>
                             <div className='text-white font-thin text-xs flex m-2 items-end'>
                                 <p>{task.start_d.split(' ')[0]}</p>
                             </div>
@@ -132,6 +158,15 @@ const Page = ({ params }) => {
                         <div className='p-3 text-white flex flex-col items-center'>
                             <p>Assigned To</p>
                             <div className='h-[1px] w-[50%] bg-zinc-800'></div>
+                            {Array.isArray(assignedData?.tasksWithAssignedImages) && assignedData.tasksWithAssignedImages.length > 0 ? (
+                                assignedData.tasksWithAssignedImages.map((assigned, index) => (
+                                    <div key={index}>
+                                        <span>{assigned.assigner_name}</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <span>No one is assigned to this task</span>
+                            )}
                         </div>
                     </>
                 )}

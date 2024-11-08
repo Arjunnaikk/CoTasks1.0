@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Create from '@/components/Create';
+import { Button } from "@/components/ui/button";
 import Cards from '@/components/Cards';
 import { ArrowUp, Menu, Trash2 } from 'lucide-react';
 import DialogDemo from '@/components/DialogDemo';
@@ -27,13 +28,23 @@ const Page = ({ params }) => {
   const deleteTaskMutation = useDeleteMyTaskMutation();
 
   const [task, setTask] = useState(null);
+  const [sortDirection, setSortDirection] = useState('desc');
+  const [tasks, setTasks] = useState([]);
 
+  // Update tasks when myTask data changes
+  useEffect(() => {
+    if (myTask?.newTask) {
+      setTasks([...myTask.newTask]); // Create a new array to avoid reference issues
+    }
+  }, [myTask]);
+
+  // Update current task when needed
   useEffect(() => {
     if (myTask?.newTask) {
       const currentTask = myTask.newTask.find(item => item.task_id === parseInt(params.taskId, 10));
       setTask(currentTask);
     }
-  }, [myTask, params.taskId]); // Update task whenever myTask or taskId changes
+  }, [myTask, params.taskId]);
 
   if (isLoading || listLoading) return <SkeletonDemo />;
   if (error || listError) return <ErrorComponent error={error || listError} />;
@@ -43,39 +54,49 @@ const Page = ({ params }) => {
   };
 
   const handleDelete = async () => {
-    if (!task) return; // Prevent deletion if task is not set
+    if (!task) return;
     try {
       await deleteTaskMutation.mutateAsync({
         userMail: session?.user?.email,
-        task_id: task.task_id, // or use task_id if your mutation supports it
+        task_id: task.task_id,
       });
-      console.log("Task deleted successfully"); // Redirect or refresh as needed
+      console.log("Task deleted successfully");
     } catch (error) {
       console.error("Error deleting task:", error);
     }
   };
-  console.log("kekekekke",myTask?.newTask)
+
+  const handleSort = () => {
+    const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortDirection(newDirection);
+    
+    const sortedTasks = [...tasks].sort((a, b) => {
+      if (newDirection === 'asc') {
+        return a.priority - b.priority;
+      } else {
+        return b.priority - a.priority;
+      }
+    });
+    
+    setTasks(sortedTasks);
+  };
+
   return (
     <>
       {/* Sidebar */}
-      
       <div className='w-[25vw] h-[90.8vh] bg-#09090b top-[55px] sticky rounded-md m-1 flex flex-col items-center gap-3 p-1 border-zinc-800 border-[0.5px]'>
         <div className='h-auto px-[1px] py-[10px] bg-#18181b w-[90%] rounded-md flex flex-col gap-2 justify-center items-center'>
           <h3 className='text-2xl font-bold text-white'>My List</h3>
           <div className='w-[21vw] h-[0.5px] bg-zinc-700'></div>
           <div className="h-[71vh] overflow-y-scroll bg-#09090b">
             <div className="flex flex-col">
-              {(Array.isArray(listData?.newList) ? listData.newList : []).map((item, index) => {
-                // const firstTaskId = myTask?.newTask.find(task => task.listId === item.id)?.task_id;
-
-                return (
-                  <List 
-                    key={index} 
-                    listName={item.name} 
-                    handleClick={() => handleRoute(item.name)} 
-                  />
-                );
-              })}
+              {(Array.isArray(listData?.newList) ? listData.newList : []).map((item, index) => (
+                <List 
+                  key={index} 
+                  listName={item.name} 
+                  handleClick={() => handleRoute(item.name)} 
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -86,16 +107,35 @@ const Page = ({ params }) => {
 
       {/* My Page */}
       <div className='h-auto w-auto bg-#09090b m-2 flex flex-col items-start gap-6 pt-[50px]'>
-      <div className='h-auto w-auto bg-#09090b m-2 flex flex-col items-start gap-6 pt-[50px]'>
-  {Array.isArray(myTask?.newTask) && myTask.newTask.length > 0 ? (
-    myTask.newTask.map((item, index) => (
-      <Cards myTask={myTask} keye={index} key={index} listName={params.listId} handleClick={() => handleRoute(item.name)} />
-    ))
-  ) : (
-    <EmptyCard/>
-  )}
-</div>
-
+        <div className="flex items-center gap-2 mx-3">
+          <Button 
+            variant="outline" 
+            onClick={handleSort} 
+            className="text-black flex items-center gap-2"
+          >
+            Sort by Priority 
+            {sortDirection === 'asc' ? (
+              <ArrowUp className="h-4 w-4" />
+            ) : (
+              <ArrowDown className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        <div className='h-auto w-auto bg-#09090b m-2 flex flex-col items-start gap-6'>
+          {Array.isArray(tasks) && tasks.length > 0 ? (
+            tasks.map((item, index) => (
+              <Cards 
+                myTask={{ newTask: tasks }} // Pass the sorted tasks
+                keye={index} 
+                key={index} 
+                listName={params.listId} 
+                handleClick={() => handleRoute(item.name)}
+              />
+            ))
+          ) : (
+            <EmptyCard/>
+          )}
+        </div>
       </div>
 
       {/* Task Detail */}
@@ -109,7 +149,6 @@ const Page = ({ params }) => {
           <>
             <div className='flex flex-row p-1 justify-between'>
               <div className='flex flex-row p-0'>
-                {/* <img src={session?.user?.image || "default-image.jpg"} alt="User" className='cardimg m-2 rounded-full' /> */}
                 <h1 className='text-2xl font-semibold text-white flex p-2 items-center'>{task.title}</h1>
               </div>
               <div className='text-white font-thin text-xs flex m-2 items-end'>

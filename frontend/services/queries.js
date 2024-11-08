@@ -92,3 +92,21 @@ export function useGetMyTeamQuery(userGmail) {
     },
   });
 }
+
+
+//Assigned 
+export function useGetAssignedQuery(team_name, task_id) {
+  return useQuery({
+    queryKey: ["getAssigned", team_name, task_id],
+    queryFn: async () => {
+      const response = await axios.post(
+        "https://cotask.somprajapati24-dcf.workers.dev/taskAssigned/fetch",
+        {
+          team_name,
+          task_id: parseInt(task_id, 10)
+        }
+      );
+      return response.data;  // Only return the data part
+    },
+  });
+}

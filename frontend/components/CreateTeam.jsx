@@ -55,6 +55,12 @@ export function Create({ userMail, teamId }) {
     console.log(form.end_d); // Outputs the ISO string representation of the date
 };
   
+  const handleAssignToChange = (e) => {
+    const value = e.target.value;
+    // Split by comma and trim each item
+    setForm(prev => ({ ...prev, assign_to: value.split(",").map(email => email.trim()) }));
+  };
+  
 
   const resetForm = () => {
     setForm({
@@ -70,35 +76,39 @@ export function Create({ userMail, teamId }) {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    console.log("Submitting form:", form)
-
+    e.preventDefault();
+    console.log("Submitting form:", form);
+  
     if (!form.title.trim()) {
-      alert("Please enter a title")
-      return
+      alert("Please enter a title");
+      return;
     }
-    // console.log(form)
+  
     try {
       const result = await mutation.mutateAsync(
-        form, // Send the entire form object
+        {
+          ...form,
+          userArray: form.assign_to, // Map assign_to to userArray
+        },
         {
           onSuccess: (data) => {
-            console.log("Task created successfully:", data)
-            resetForm()
-            setOpen(false) // Close the sheet after successful submission
+            console.log("Task created successfully:", data);
+            resetForm();
+            setOpen(false); // Close the sheet after successful submission
           },
           onError: (error) => {
-            console.error("Mutation error:", error)
-            console.error("Error response:", error.response?.data)
-            alert("Failed to create task: " + (error.response?.data?.message || error.message))
+            console.error("Mutation error:", error);
+            console.error("Error response:", error.response?.data);
+            alert("Failed to create task: " + (error.response?.data?.message || error.message));
           },
         }
-      )
+      );
     } catch (error) {
-      console.error("Submit error:", error)
-      alert("Error creating task. Please try again.")
+      console.error("Submit error:", error);
+      alert("Error creating task. Please try again.");
     }
-  }
+  };
+  
 
   return (
     <div className="fixed bottom-5 right-5">
@@ -154,18 +164,19 @@ export function Create({ userMail, teamId }) {
                   onChange={handleDateChange}
               />
               <div className="flex flex-col items-start gap-2 mt-6">
-                <Label htmlFor="title" className="text-right">
-                  Assign to People
+                <Label htmlFor="assign_to" className="text-right">
+                    Assign to People (comma-separated emails)
                 </Label>
                 <Input
-                  onChange={handleChange}
-                  id="assign_to"
-                  name='assign_to'
-                  value={form.assign_to}
-                  className="col-span-3 bg-black text-white"
-                  required
+                    onChange={handleAssignToChange} // Use the new handler
+                    id="assign_to"
+                    name="assign_to"
+                    value={form.assign_to.join(", ")} // Display as comma-separated
+                    className="col-span-3 bg-black text-white"
+                    required
                 />
-              </div>
+                </div>
+
 
               </div>
               <SheetFooter>

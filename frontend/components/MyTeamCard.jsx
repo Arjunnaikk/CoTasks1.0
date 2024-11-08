@@ -22,7 +22,9 @@ const MyTeamCard = ({ myTeamTask, keye, teamName }) => {
     return (
         <div onClick={handleClick} className='bg-#09090b border border-zinc-800 border-1 w-[35vw] h-[22vh] rounded-lg flex flex-col relative hover:bg-zinc-800 transition-colors cursor-pointer'>
             <div className='flex flex-row'>
-                <h1 className='text-2xl font-semibold text-white flex p-2 ml-7 items-center'>{task.title}</h1>
+                <img className='mx-3 my-2 w-[50px] h-[50px]' src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${task.assigner_id}`} alt="" />
+                
+                <h1 className='text-2xl font-semibold text-white flex p-2 items-center'>{task.title}</h1>
             </div>
             <div className='text-sm font-inter font-poppins text-white flex pl-10 pr-1 py-1 overflow-hidden w-[70%] h-[auto]'>
                 <span>{task.descrption}</span>

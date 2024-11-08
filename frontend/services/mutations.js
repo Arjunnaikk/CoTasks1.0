@@ -42,6 +42,33 @@ export function useCreateListMutation() {
 
 
 
+//Create Team
+export function useCreateTeamMutation() {
+  return useMutation({
+    mutationKey: ["createTeam"],
+    mutationFn: async ({ title, names }) => {
+      // Log the correct request data
+      console.log("Sending data:", JSON.stringify({ title: title, user_array: names }));
+
+      return (
+        await axios.post(
+          "https://cotask.somprajapati24-dcf.workers.dev/team/create",
+          JSON.stringify({ title: title, user_array: names }), // Send as stringified JSON with 'title' and 'user_array' keys
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        )
+      ).data;
+    },
+    retry: false,
+  });
+}
+
+
+
+
 //Create Task
 // export function useCreateMyTaskMutation() {
 //   return useMutation({
