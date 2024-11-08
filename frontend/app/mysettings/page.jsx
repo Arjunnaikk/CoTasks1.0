@@ -7,6 +7,7 @@ import AppearanceSection from "@/components/AppearanceSection";
 import FeedbackSection from "@/components/FeedbackSection";
 
 const Page = () => {
+
   const [selectedSection, setSelectedSection] = useState("profile");
   const [theme, setTheme] = useState("dark");
 

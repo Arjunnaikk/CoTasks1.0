@@ -1,6 +1,10 @@
+'use client'
+
 import React from "react";
+import { useSession } from "next-auth/react";
 
 const ProfileSection = () => {
+  const { data: session } = useSession()
   return (
     <div className="text-white w-[90%]">
       <h3 className="text-2xl font-bold mb-4">Profile Settings</h3>
@@ -8,10 +12,7 @@ const ProfileSection = () => {
       {/* DP (Display Picture) */}
       <div className="mb-4">
         <label className="block text-sm font-semibold mb-2">Display Picture</label>
-        <input
-          type="file"
-          className="w-[50vw] bg-transparent border-zinc-800 border-[0.5px] rounded-md px-4 py-2 text-sm"
-        />
+        <img className='mx-1 my-2 w-[70px] h-[70px]' src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${session?.user?.name}`} alt="" />
       </div>
       
       {/* Username */}
@@ -20,6 +21,7 @@ const ProfileSection = () => {
         <input
           type="text"
           placeholder="username"
+          value={session?.user?.name}
           className="w-[50vw] bg-transparent rounded-md px-4 py-2 text-sm border-zinc-800 border-[0.5px]"
         />
       </div>
@@ -30,6 +32,7 @@ const ProfileSection = () => {
         <input
           type="email"
           placeholder="email"
+          value={session?.user?.email}
           className="w-[50vw] bg-transparent border-zinc-800 border-[0.5px] rounded-md px-4 py-2 text-sm"
         />
       </div>

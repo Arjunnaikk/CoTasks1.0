@@ -67,6 +67,31 @@ export function useCreateTeamMutation() {
 }
 
 
+//Update Team Task
+export function useUpdateTaskStatusMutation() {
+  return useMutation({
+    mutationKey: ["updateTask"],
+    mutationFn: async ({ title, names, status }) => {
+      // Log the correct request data
+      console.log("Sending data:", JSON.stringify({ user_gmail : title, task_name: names, status: status }));
+
+      return (
+        await axios.post(
+          "https://cotask.somprajapati24-dcf.workers.dev/myTask/update",
+          JSON.stringify({ title: title, user_array: names }), // Send as stringified JSON with 'title' and 'user_array' keys
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        )
+      ).data;
+    },
+    retry: false,
+  });
+}
+
+
 
 
 //Create Task
