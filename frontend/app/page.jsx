@@ -1,6 +1,6 @@
 'use client'
 import { signIn, signOut, useSession } from "next-auth/react"
-import { useCreateMyTaskMutation } from "@/services/mutations"
+import { useCreateUserMutation } from "@/services/mutations"
 import { useGetUserQuery } from "@/services/queries"
 import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -71,12 +71,68 @@ const TESTIMONIALS = [
 export default function Home() {
   const { data: session } = useSession()
   const { data: userData, isLoading, error } = useGetUserQuery()
-  const createUserMutation = useCreateMyTaskMutation()
-  console.log(session?.user?.name)
+  const mutation = useCreateUserMutation()
+  // console.log(session?.user?.image)
+  // console.log("WTF",userData.user[0])
+  // console.log("WTF",userData?.user[0])
+  const targetedGmail = userData?.user.some(u => u.gmail == session?.user?.email)
+    console.log(targetedGmail)
+
+    // if(!targetedGmail){
+    //   try{
+    //     const result = await mutation.mutateAsync(
+    //     {
+    //       name: session?.user?.name,
+    //       email: session?.user?.email,
+    //       image: session?.user?.image
+    //     },
+    //     {
+    //       onSuccess: (data) => {
+    //         console.log("Task created successfully:", data);
+    //       },
+    //       onError: (error) => {
+    //         console.error("Mutation error:", error);
+    //         console.error("Error response:", error.response?.data);
+    //         alert("Failed to create task: " + (error.response?.data?.message || error.message));
+    //       },
+    //     })
+    //   }
+    //   catch (error) {
+    //     console.error("Submit error:", error);
+    //     alert("Error creating task. Please try again.");
+    //   }
+    // }
+
+    useEffect(() => {
+      const handleCreateUser = async () => {
+        if (isLoading || !userData || !session?.user?.email) return;
+    
+        const targetedGmail = userData?.user?.some(u => u.gmail === session?.user?.email);
+    
+        if (!targetedGmail) {
+          try {
+            await mutation.mutateAsync({
+              name: session?.user?.name,
+              gmail: session?.user?.email,
+              imgText: session?.user?.image,
+            });
+            console.log("User created successfully");
+          } catch (error) {
+            console.error("Failed to create user:", error);
+            alert("Error creating user. Please try again.");
+          }
+        }
+      };
+    
+      handleCreateUser();
+    }, [session, userData, isLoading]);
+    
+    
+  
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <header className="px-4 lg:px-6 h-14 flex items-center text-white">
+      {/* <header className="px-4 lg:px-6 h-14 flex items-center text-white">
         <a className="flex items-center justify-center" href="#">
           <CheckCircle className="h-6 w-6" />
           <span className="sr-only">Acme Inc</span>
@@ -87,7 +143,7 @@ export default function Home() {
           <a className="text-sm font-medium hover:underline underline-offset-4" href="#">About</a>
           <a className="text-sm font-medium hover:underline underline-offset-4" href="#">Contact</a>
         </nav>
-      </header>
+      </header> */}
 
       <main className="flex-1">
         {/* Hero Section */}

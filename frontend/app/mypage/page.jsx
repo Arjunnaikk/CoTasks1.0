@@ -33,23 +33,12 @@ const Page = ({params}) => {
   // console.log(listData)
 
   const handleClick = () => {
-    // console.log("Hello")
+
     router.push(`/mypage/${listData.newList[0]}/task/`)
   }
-  // console.log("ijdfidkjskdjmsc",taskData)
 
   const handleRoute = async (name) => {
-    try {
-      
-      if (true) {
-        const firstTaskId = taskData.newTask[0].task_id;
-        router.push(`/mypage/${name}/task/${firstTaskId}`);
-      } else {
-        console.log(`No tasks found for the list: ${name}`);
-      }
-    } catch (error) {
-      console.error("Error fetching tasks for list:", error);
-    }
+        router.push(`/mypage/${name}/task/0`);
   };
   
   

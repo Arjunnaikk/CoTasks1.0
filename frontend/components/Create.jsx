@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Sheet,
@@ -54,7 +54,6 @@ export function Create({ userMail, listId }) {
     console.log(form.end_d); // Outputs the ISO string representation of the date
 };
   
-
   const resetForm = () => {
     setForm({
       title: '',
@@ -70,7 +69,6 @@ export function Create({ userMail, listId }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     console.log("Submitting form:", form)
-
     if (!form.title.trim()) {
       alert("Please enter a title")
       return
@@ -83,6 +81,7 @@ export function Create({ userMail, listId }) {
           onSuccess: (data) => {
             console.log("Task created successfully:", data)
             resetForm()
+            refetch();
             setOpen(false) // Close the sheet after successful submission
           },
           onError: (error) => {

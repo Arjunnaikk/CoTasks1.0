@@ -3,18 +3,34 @@ import { useMutation } from "@tanstack/react-query";
 
 //Create User
 export function useCreateUserMutation() {
-    return useMutation({
-      mutationKey: ["createTask"],
-      mutationFn: async (data) => {
-        return (
-          await axios.post("https://cotask.somprajapati24-dcf.workers.dev/myTask/create", data, {
-            headers: { "Content-Type": "application/json" },
-          })
-        ).data;
-      },
-      retry: false,
-    });
-  }
+  return useMutation({
+    mutationKey: ["createUser"],
+    mutationFn: async ({ name, gmail, imgText}) => {
+      console.log('imgText',imgText)
+      try {
+        const response = await axios.post(
+          "https://cotask.somprajapati24-dcf.workers.dev/user/create",
+          JSON.stringify({
+            name,
+            gmail,
+            imgtext: imgText
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error; // Allows onError to catch this error in the calling component
+      }
+    },
+    retry: false, // Keeps retry disabled for specific control
+  });
+}
+
 
 //Create List
 export function useCreateListMutation() {
@@ -193,7 +209,7 @@ export function useCreateMyTeamTaskMutation() {
 export function useDeleteMyTaskMutation() {
   return useMutation({
     mutationKey: ["deleteTask"],
-    mutationFn: async ({ userMail, taskName }) => {
+    mutationFn: async ({ userMail, taskId }) => {
       // console.log("Deleting task data:");
     //   console.log(typeof formattedEndD); // Outputs: 'object'
     // console.log(formattedEndD instanceof Date); // Outputs: true
@@ -207,7 +223,7 @@ export function useDeleteMyTaskMutation() {
         },
         data: JSON.stringify({
           user_gmail: userMail,
-          task_name: taskName
+          task_id: taskId
         }),
       }
     );

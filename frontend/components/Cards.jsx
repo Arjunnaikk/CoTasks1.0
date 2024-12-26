@@ -24,7 +24,7 @@ const Card = ({ myTask, keye, listName }) => {
                 <h1 className='text-2xl font-semibold text-white flex p-2 ml-7 items-center'>{task.title}</h1>
             </div>
             <div className='text-sm font-inter font-poppins text-white flex pl-10 pr-1 py-1 overflow-hidden w-[70%] h-[auto]'>
-                <span>{task.descrption}</span>
+                <span>{task.descrption.length > 100 ? `${task.descrption.slice(0,100)}...`: task.descrption}</span>
             </div>
             <div className='absolute right-10 top-2 w-auto flex flex-row gap-5 justify-center text-white'>
                 {task.priority === 1 && <ArrowDown />}

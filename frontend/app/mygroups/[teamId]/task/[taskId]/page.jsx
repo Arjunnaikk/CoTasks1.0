@@ -26,8 +26,12 @@ import SkeletonDemo from "@/components/SkeletonDemo";
 const ErrorComponent = ({ error }) => <div>Error: {error?.message || "An error occurred"}</div>;
 
 const Page = ({ params }) => {
-    const { data: session } = useSession();
     const router = useRouter();
+    const { data: session } = useSession();
+    //if(session === null) return;
+    if(!session) {
+        router.push('/api/auth/signin');   
+    }
     // Queries
     const { data: myTeamTask, isLoading, error } = useGetMyTeamTaskQuery(session?.user?.email, params.teamId);
     const { data: teamData, isLoading: teamLoading, error: teamError } = useGetMyTeamQuery(session?.user?.email);
@@ -116,6 +120,9 @@ const Page = ({ params }) => {
             </div>
 
             {/* My Page */}
+            <div>
+                
+            </div>
             <div className='h-auto w-auto bg-[#09090b] m-2 flex flex-col items-start gap-6 pt-[50px]'>
                 <div className="flex items-center gap-2 mx-3">
                     <Button 

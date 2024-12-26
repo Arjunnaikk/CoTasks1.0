@@ -14,12 +14,17 @@ import { ArrowRight } from "lucide-react"
 import { ArrowDown } from "lucide-react"
 import { useDeleteMyTaskMutation } from "@/services/mutations"
 
+
 const Loading = () => <div>Loading...</div>;
 const ErrorComponent = ({ error }) => <div>Error: {error?.message || "An error occurred"}</div>;
 
 const Page = ({ params }) => {
-  const { data: session } = useSession();
   const router = useRouter();
+  const { data: session } = useSession();
+  if(session === null) return;
+  if(!session) {
+    router.push('/');   
+  }
   const { data: myTask, isLoading, error } = useGetMyTaskQuery(session?.user?.email, params.listId);
   const { data: listData, isLoading: listLoading, error: listError } = useGetListQuery(session?.user?.email);
   

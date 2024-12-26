@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import { useGetMyTaskQuery, useGetListQuery } from "@/services/queries";
 import { useDeleteMyTaskMutation, useUpdateTaskStatusMutation } from "@/services/mutations";
-import { ArrowUp, ArrowDown, ArrowRight, Menu, Trash2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowRight, Menu, Trash2, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -15,111 +15,160 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import Sidebar from '@/components/Sidebar';
 import Create from '@/components/Create';
 import Cards from '@/components/Cards';
 import DialogDemo from '@/components/DialogDemo';
 import List from "@/components/List";
 import EmptyCard from '@/components/EmptyCard';
 import SkeletonDemo from "@/components/SkeletonDemo";
+import { Input } from "@/components/ui/input";
+
+const STATUS_COLORS = {
+  'Not Started': 'bg-red-500',
+  'In Progress': 'bg-yellow-500',
+  'Completed': 'bg-green-500',
+  'default': 'bg-gray-500'
+};
 
 const ErrorComponent = ({ error }) => <div>Error: {error?.message || "An error occurred"}</div>;
 
 const Page = ({ params }) => {
-  const { data: session } = useSession();
   const router = useRouter();
-  const { data: myTask, isLoading, error } = useGetMyTaskQuery(session?.user?.email, params.listId);
-  const { data: listData, isLoading: listLoading, error: listError } = useGetListQuery(session?.user?.email);
-  const deleteTaskMutation = useDeleteMyTaskMutation();
-  // const updateTaskStatusMutation = useUpdateTaskStatusMutation();
+  const { data: session } = useSession();
+  
+  const [pageState, setPageState] = useState({
+    task: null,
+    sortDirection: 'desc',
+    tasks: [],
+    searchQuery: '',
+    filteredTasks: [],
+    selectedList: params.listId
+  });
 
-  const [task, setTask] = useState(null);
-  const [sortDirection, setSortDirection] = useState('desc');
-  const [tasks, setTasks] = useState([]);
+  useEffect(() => {
+    if (!session) {
+      router.push('/api/auth/signin');
+    }
+  }, [session, router]);
+
+  const { 
+    data: myTask, 
+    isLoading, 
+    error 
+  } = useGetMyTaskQuery(session?.user?.email, params.listId);
+
+  const { 
+    data: listData, 
+    isLoading: listLoading, 
+    error: listError 
+  } = useGetListQuery(session?.user?.email);
+
+  const deleteTaskMutation = useDeleteMyTaskMutation();
+  const updateTaskStatusMutation = useUpdateTaskStatusMutation();
 
   useEffect(() => {
     if (myTask?.newTask) {
-      setTasks([...myTask.newTask]);
+      setPageState(prev => ({
+        ...prev,
+        tasks: myTask.newTask,
+        filteredTasks: myTask.newTask
+      }));
     }
   }, [myTask]);
 
   useEffect(() => {
     if (myTask?.newTask) {
-      const currentTask = myTask.newTask.find(item => item.task_id === parseInt(params.taskId, 10));
-      setTask(currentTask);
+      const currentTask = myTask.newTask.find(
+        item => item.task_id === parseInt(params.taskId, 10)
+      );
+      setPageState(prev => ({ ...prev, task: currentTask }));
     }
   }, [myTask, params.taskId]);
 
-  if (isLoading || listLoading) return <SkeletonDemo />;
-  if (error || listError) return <ErrorComponent error={error || listError} />;
+  useEffect(() => {
+    const filtered = pageState.tasks.filter(task => 
+      task.title.toLowerCase().includes(pageState.searchQuery.toLowerCase()) ||
+      task.descrption.toLowerCase().includes(pageState.searchQuery.toLowerCase())
+    );
+    setPageState(prev => ({ ...prev, filteredTasks: filtered }));
+  }, [pageState.searchQuery, pageState.tasks]);
 
   const handleRoute = (name, taskId) => {
+    setPageState(prev => ({ ...prev, selectedList: name }));
     router.push(`/mypage/${name}/task/${taskId}`);
   };
 
   const handleDelete = async () => {
-    if (!task) return;
+    if (!pageState.task) return;
+    
     try {
       await deleteTaskMutation.mutateAsync({
         userMail: session?.user?.email,
-        task_id: task.task_id,
+        taskId: pageState.task.task_id,
       });
-      console.log("Task deleted successfully");
-      const updatedTasks = tasks.filter(t => t.task_id !== task.task_id);
-      setTasks(updatedTasks);
-      setTask(null);
-      router.push(`/mypage/${params.listId}`);
+      
+      const updatedTasks = pageState.tasks.filter(t => t.task_id !== pageState.task.task_id);
+      setPageState(prev => ({
+        ...prev,
+        tasks: updatedTasks,
+        filteredTasks: updatedTasks,
+        task: null
+      }));
+      
+      router.push(`/mypage/${params.listId}/0`);
     } catch (error) {
       console.error("Error deleting task:", error);
     }
   };
 
   const handleStatusChange = async (newStatus) => {
-    if (task) {
-      try {
-        await updateTaskStatusMutation.mutateAsync({
-          user_gmail: session?.user?.email,
-          taskId: task.task_id,
-          status: newStatus
-        });
-        setTask({ ...task, status: newStatus });
-        const updatedTasks = tasks.map(t => 
-          t.task_id === task.task_id ? { ...t, status: newStatus } : t
-        );
-        setTasks(updatedTasks);
-      } catch (error) {
-        console.error("Failed to update task status:", error);
-      }
+    if (!pageState.task) return;
+
+    try {
+      await updateTaskStatusMutation.mutateAsync({
+        user_gmail: session?.user?.email,
+        taskId: pageState.task.task_id,
+        status: newStatus
+      });
+
+      const updatedTasks = pageState.tasks.map(t => 
+        t.task_id === pageState.task.task_id ? { ...t, status: newStatus } : t
+      );
+
+      setPageState(prev => ({
+        ...prev,
+        task: { ...prev.task, status: newStatus },
+        tasks: updatedTasks,
+        filteredTasks: updatedTasks
+      }));
+    } catch (error) {
+      console.error("Failed to update task status:", error);
     }
   };
 
   const handleSort = () => {
-    const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-    setSortDirection(newDirection);
-    
-    const sortedTasks = [...tasks].sort((a, b) => {
-      if (newDirection === 'asc') {
-        return a.priority - b.priority;
-      } else {
-        return b.priority - a.priority;
-      }
+    const newDirection = pageState.sortDirection === 'asc' ? 'desc' : 'asc';
+    const sortedTasks = [...pageState.filteredTasks].sort((a, b) => {
+      return newDirection === 'asc' ? 
+        a.priority - b.priority : 
+        b.priority - a.priority;
     });
-    
-    setTasks(sortedTasks);
+
+    setPageState(prev => ({
+      ...prev,
+      sortDirection: newDirection,
+      filteredTasks: sortedTasks
+    }));
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Not Started':
-        return 'bg-red-500';
-      case 'In Progress':
-        return 'bg-yellow-500';
-      case 'Completed':
-        return 'bg-green-500';
-      default:
-        return 'bg-gray-500';
-    }
+  const getStatusColor = (status) => STATUS_COLORS[status] || STATUS_COLORS.default;
+
+  const handleSearch = (e) => {
+    setPageState(prev => ({ ...prev, searchQuery: e.target.value }));
   };
+
+  if (isLoading || listLoading) return <SkeletonDemo />;
+  if (error || listError) return <ErrorComponent error={error || listError} />;
 
   return (
     <>
@@ -134,7 +183,8 @@ const Page = ({ params }) => {
                 <List 
                   key={index} 
                   listName={item.name} 
-                  handleClick={() => handleRoute(item.name)} 
+                  handleClick={() => handleRoute(item.name, 0)}
+                  isSelected={pageState.selectedList === item.name}
                 />
               ))}
             </div>
@@ -147,25 +197,39 @@ const Page = ({ params }) => {
 
       {/* My Page */}
       <div className='h-auto w-auto bg-[#09090b] m-2 flex flex-col items-start gap-6 pt-[50px]'>
-        <div className="flex items-center gap-2 mx-3">
+        <div className="w-full mb-3 px-3">
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search tasks..."
+              value={pageState.searchQuery}
+              onChange={handleSearch}
+              className="w-full pl-10 pr-4 py-2 bg-[#18181b] text-white border-zinc-700 rounded-md"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-1 mx-3">
           <Button 
             variant="outline" 
             onClick={handleSort} 
-            className="text-black flex items-center gap-2"
+            className="border-zinc-700 text-black flex items-center gap-2"
           >
             Sort by Priority 
-            {sortDirection === 'asc' ? (
+            {pageState.sortDirection === 'asc' ? (
               <ArrowUp className="h-4 w-4" />
             ) : (
               <ArrowDown className="h-4 w-4" />
             )}
           </Button>
         </div>
-        <div className='h-auto w-auto bg-[#09090b] m-2 flex flex-col items-start gap-6'>
-          {Array.isArray(tasks) && tasks.length > 0 ? (
-            tasks.map((item, index) => (
+
+        <div className='h-auto w-auto bg-[#09090b] m-2 flex flex-col items-start gap-3'>
+          {pageState.filteredTasks.length > 0 ? (
+            pageState.filteredTasks.map((item, index) => (
               <Cards 
-                myTask={{ newTask: tasks }}
+                myTask={{ newTask: pageState.filteredTasks }}
                 keye={index} 
                 key={index} 
                 listName={params.listId} 
@@ -184,33 +248,31 @@ const Page = ({ params }) => {
       <div className='h-[90.8vh] w-[35vw] rounded-md bg-[#09090b] top-[55px] left-[10px] sticky m-2 flex flex-col border border-zinc-800'>
         <div className='text-white flex justify-between m-1 p-3 cursor-pointer'>
           <Trash2 onClick={handleDelete} />
-          <Menu />
         </div>
         <div className='h-[1px] w-full bg-zinc-800'></div>
-        {task && (
+        {pageState.task && (
           <>
             <div className='flex flex-row p-1 justify-between'>
               <div className='flex flex-row p-0'>
-                <h1 className='text-2xl font-semibold text-white flex p-2 items-center'>{task.title}</h1>
+                <h1 className='text-2xl font-semibold text-white flex p-2 items-center'>{pageState.task.title}</h1>
               </div>
               <div className='text-white font-thin text-xs flex m-2 items-end'>
-                <p>{task.start_d.split(' ')[0]}</p>
+                <p>{pageState.task.start_d.split(' ')[0]}</p>
               </div>
             </div>
             <div className='h-[1px] w-full bg-zinc-800'></div>
             <div className='h-[40vh] text-sm font-inter font-poppins text-white flex p-3'>
-              <span>{task.descrption}</span>
+              <span>{pageState.task.descrption}</span>
             </div>
             <div className='h-[1px] w-full bg-zinc-800'></div>
             <div className='p-3 text-white flex flex-col gap-3'>
-              
               <div className="flex items-center gap-2">
                 <span>Update Status:</span>
-                <Select onValueChange={handleStatusChange} className="text-black bg-zinc-900"  defaultValue={task.status}>
-                  <SelectTrigger className="w-[180px] text-black">
-                    <SelectValue className="text-black bg-zinc-900" placeholder="Select a status" />
+                <Select onValueChange={handleStatusChange} defaultValue={pageState.task.status}>
+                  <SelectTrigger className="w-[180px] bg-zinc-800 border-zinc-700 text-white">
+                    <SelectValue className="text-white" placeholder="Select a status" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
                     <SelectItem value="Not Started">Not Started</SelectItem>
                     <SelectItem value="In Progress">In Progress</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
@@ -219,22 +281,22 @@ const Page = ({ params }) => {
               </div>
             </div>
             <div className='h-[1px] w-full bg-zinc-800'></div>
-              <div className='w-auto flex flex-row gap-5 justify-between items-center p-3 text-white'>
-                <div className="flex items-center gap-2">
-                  <span>Priority:</span>
-                  {task.priority === 1 && <span className="flex items-center">Low <ArrowDown className="ml-1" /></span>}
-                  {task.priority === 2 && <span className="flex items-center">Mid <ArrowRight className="ml-1" /></span>}
-                  {task.priority === 3 && <span className="flex items-center">High <ArrowUp className="ml-1" /></span>}
-                </div>
-                <Badge className={`${getStatusColor(task.status)} text-white`}>
-                  {task.status}
-                </Badge>
+            <div className='w-auto flex flex-row gap-5 justify-between items-center p-3 text-white'>
+              <div className="flex items-center gap-2">
+                <span>Priority:</span>
+                {pageState.task.priority === 1 && <span className="flex items-center">Low <ArrowDown className="ml-1" /></span>}
+                {pageState.task.priority === 2 && <span className="flex items-center">Mid <ArrowRight className="ml-1" /></span>}
+                {pageState.task.priority === 3 && <span className="flex items-center">High <ArrowUp className="ml-1" /></span>}
               </div>
+              <Badge className={`${getStatusColor(pageState.task.status)} text-white`}>
+                {pageState.task.status}
+              </Badge>
+            </div>
             <div className='h-[1px] w-full bg-zinc-800'></div>
           </>
         )}
       </div>
-      <Create userMail={session?.user?.email} listId={params.listId} />
+      <Create userMail={session?.user?.email} listId={params.listId} onTaskCreated={() => {}} />
     </>
   );
 }

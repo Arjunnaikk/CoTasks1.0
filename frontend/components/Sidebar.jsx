@@ -50,7 +50,7 @@ const Sidebar = () => {
 
           {/* Link to the first task of the first list */}
           {(
-            <Link href={`/mypage/College/task/8`}>
+            <Link href={`/mypage/`}>
               <User /> {/* Change icon as needed */}
             </Link>
           )}

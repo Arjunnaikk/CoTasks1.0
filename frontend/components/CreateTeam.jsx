@@ -10,15 +10,25 @@ import {
   SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetFooter,
 } from "@/components/ui/sheet"
-import { Plus } from "lucide-react"
+import { Plus } from 'lucide-react'
 import SelectDemo from "./SelectDemo"
 import DatePickerDemo from "./DatePicker"
 import { useCreateMyTeamTaskMutation } from "@/services/mutations"
+import { PeopleSelect } from "./PeopleSelect"
+
+const people = [
+  { value: "alice@example.com", label: "Alice Johnson" },
+  { value: "bob@example.com", label: "Bob Smith" },
+  { value: "charlie@example.com", label: "Charlie Brown" },
+  { value: "david@example.com", label: "David Lee" },
+  { value: "eva@example.com", label: "Eva Martinez" },
+  // Add more people as needed
+]
 
 export function Create({ userMail, teamId }) {
   const [form, setForm] = useState({
@@ -29,7 +39,7 @@ export function Create({ userMail, teamId }) {
     taskStatus: 'ongoing',
     userMail: userMail,
     teamName: teamId,
-    assign_to:[]
+    assign_to: []
   })
 
   const [open, setOpen] = useState(false)
@@ -47,20 +57,17 @@ export function Create({ userMail, teamId }) {
 
   const handleDateChange = (date) => {
     if (date instanceof Date) {
-        setForm(prev => ({ ...prev, end_d: date.toISOString() }));
+      setForm(prev => ({ ...prev, end_d: date.toISOString() }));
     } else {
-        setForm(prev => ({ ...prev, end_d: new Date(date).toISOString() }));
+      setForm(prev => ({ ...prev, end_d: new Date(date).toISOString() }));
     }
-    console.log(typeof form.end_d); // Outputs: 'string'
-    console.log(form.end_d); // Outputs the ISO string representation of the date
-};
-  
-  const handleAssignToChange = (e) => {
-    const value = e.target.value;
-    // Split by comma and trim each item
-    setForm(prev => ({ ...prev, assign_to: value.split(",").map(email => email.trim()) }));
+    console.log(typeof form.end_d);
+    console.log(form.end_d);
   };
-  
+
+  const handleAssignToChange = (selectedEmails) => {
+    setForm(prev => ({ ...prev, assign_to: selectedEmails }));
+  };
 
   const resetForm = () => {
     setForm({
@@ -71,30 +78,30 @@ export function Create({ userMail, teamId }) {
       taskStatus: 'ongoing',
       userMail: userMail,
       teamName: teamId,
-      assign_to:[]
+      assign_to: []
     })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Submitting form:", form);
-  
+
     if (!form.title.trim()) {
       alert("Please enter a title");
       return;
     }
-  
+
     try {
       const result = await mutation.mutateAsync(
         {
           ...form,
-          userArray: form.assign_to, // Map assign_to to userArray
+          userArray: form.assign_to,
         },
         {
           onSuccess: (data) => {
             console.log("Task created successfully:", data);
             resetForm();
-            setOpen(false); // Close the sheet after successful submission
+            setOpen(false);
           },
           onError: (error) => {
             console.error("Mutation error:", error);
@@ -108,7 +115,6 @@ export function Create({ userMail, teamId }) {
       alert("Error creating task. Please try again.");
     }
   };
-  
 
   return (
     <div className="fixed bottom-5 right-5">
@@ -159,25 +165,26 @@ export function Create({ userMail, teamId }) {
                 />
               </div>
               <div>
-              <DatePickerDemo
-                  value={form.end_d ? new Date(form.end_d) : null} // Convert ISO string back to Date
+                <DatePickerDemo
+                  value={form.end_d ? new Date(form.end_d) : null}
                   onChange={handleDateChange}
-              />
-              <div className="flex flex-col items-start gap-2 mt-6">
-                <Label htmlFor="assign_to" className="text-right">
-                    Assign to People (comma-separated emails)
-                </Label>
-                <Input
-                    onChange={handleAssignToChange} // Use the new handler
-                    id="assign_to"
-                    name="assign_to"
-                    value={form.assign_to.join(", ")} // Display as comma-separated
-                    className="col-span-3 bg-black text-white"
-                    required
                 />
-                </div>
-
-
+              </div>
+              <div className="flex flex-col items-start gap-2">
+                <Label htmlFor="assign_to" className="text-right">
+                  Assign to People
+                </Label>
+                <PeopleSelect
+                  value={form.assign_to}
+                  onChange={handleAssignToChange}
+                />
+                {form.assign_to.length > 0 && (
+                  <div className="mt-2 text-sm text-gray-400">
+                    Selected: {form.assign_to.map(email =>
+                      people.find(p => p.value === email)?.label
+                    ).join(', ')}
+                  </div>
+                )}
               </div>
               <SheetFooter>
                 <Button
@@ -197,3 +204,4 @@ export function Create({ userMail, teamId }) {
 }
 
 export default Create
+
