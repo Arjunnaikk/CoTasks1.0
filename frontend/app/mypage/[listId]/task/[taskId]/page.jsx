@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import { useGetMyTaskQuery, useGetListQuery } from "@/services/queries";
-import { useDeleteMyTaskMutation, useUpdateTaskStatusMutation } from "@/services/mutations";
+import { useDeleteMyTaskMutation, useUpdateTaskStatusMutation, useDeleteListMutation } from "@/services/mutations";
 import { ArrowUp, ArrowDown, ArrowRight, Menu, Trash2, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +34,7 @@ const ErrorComponent = ({ error }) => <div>Error: {error?.message || "An error o
 
 const Page = ({ params }) => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   
   const [pageState, setPageState] = useState({
     task: null,
@@ -46,10 +46,10 @@ const Page = ({ params }) => {
   });
 
   useEffect(() => {
-    if (!session) {
+    if (status === "unauthenticated") {
       router.push('/api/auth/signin');
     }
-  }, [session, router]);
+  }, [status, router]);
 
   const { 
     data: myTask, 
@@ -65,6 +65,7 @@ const Page = ({ params }) => {
 
   const deleteTaskMutation = useDeleteMyTaskMutation();
   const updateTaskStatusMutation = useUpdateTaskStatusMutation();
+  const deleteListMutation = useDeleteListMutation();
 
   useEffect(() => {
     if (myTask?.newTask) {
@@ -93,10 +94,27 @@ const Page = ({ params }) => {
     setPageState(prev => ({ ...prev, filteredTasks: filtered }));
   }, [pageState.searchQuery, pageState.tasks]);
 
+  
   const handleRoute = (name, taskId) => {
     setPageState(prev => ({ ...prev, selectedList: name }));
     router.push(`/mypage/${name}/task/${taskId}`);
   };
+  
+  const handleListDelete = async (listName)=>{
+    console.log("helo broda",listName)
+    try{
+      await deleteListMutation.mutateAsync({
+        userMail: session?.user?.email,
+        name: listName,
+      });
+      
+      
+      
+      router.push('/mypage');
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  }
 
   const handleDelete = async () => {
     if (!pageState.task) return;
@@ -122,29 +140,35 @@ const Page = ({ params }) => {
   };
 
   const handleStatusChange = async (newStatus) => {
+    console.log("Work man it aint funny")
     if (!pageState.task) return;
-
+  
     try {
-      await updateTaskStatusMutation.mutateAsync({
+      // Perform the mutation
+      const updatedTask = await updateTaskStatusMutation.mutateAsync({
         user_gmail: session?.user?.email,
-        taskId: pageState.task.task_id,
-        status: newStatus
+        task_name: pageState.task.title, // Assuming the task has a title field
+        status: newStatus,
       });
-
-      const updatedTasks = pageState.tasks.map(t => 
-        t.task_id === pageState.task.task_id ? { ...t, status: newStatus } : t
-      );
-
-      setPageState(prev => ({
-        ...prev,
-        task: { ...prev.task, status: newStatus },
-        tasks: updatedTasks,
-        filteredTasks: updatedTasks
-      }));
+  
+      // Update the state based on the mutation response
+      setPageState((prev) => {
+        const updatedTasks = prev.tasks.map((t) =>
+          t.task_id === prev.task.task_id ? { ...t, status: newStatus } : t
+        );
+  
+        return {
+          ...prev,
+          task: { ...prev.task, status: newStatus },
+          tasks: updatedTasks,
+          filteredTasks: updatedTasks,
+        };
+      });
     } catch (error) {
       console.error("Failed to update task status:", error);
     }
   };
+  
 
   const handleSort = () => {
     const newDirection = pageState.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -185,6 +209,7 @@ const Page = ({ params }) => {
                   listName={item.name} 
                   handleClick={() => handleRoute(item.name, 0)}
                   isSelected={pageState.selectedList === item.name}
+                  handleListDelete={() => handleListDelete(item.name)}
                 />
               ))}
             </div>
@@ -212,9 +237,8 @@ const Page = ({ params }) => {
         
         <div className="flex items-center gap-1 mx-3">
           <Button 
-            variant="outline" 
             onClick={handleSort} 
-            className="border-zinc-700 text-black flex items-center gap-2"
+            className="border-zinc-200 text-white flex items-center gap-2"
           >
             Sort by Priority 
             {pageState.sortDirection === 'asc' ? (
@@ -247,7 +271,7 @@ const Page = ({ params }) => {
       {/* Task Detail */}
       <div className='h-[90.8vh] w-[35vw] rounded-md bg-[#09090b] top-[55px] left-[10px] sticky m-2 flex flex-col border border-zinc-800'>
         <div className='text-white flex justify-between m-1 p-3 cursor-pointer'>
-          <Trash2 onClick={handleDelete} />
+        <Trash2 onClick={handleDelete} className=" hover:text-red-600"/>
         </div>
         <div className='h-[1px] w-full bg-zinc-800'></div>
         {pageState.task && (
@@ -269,13 +293,13 @@ const Page = ({ params }) => {
               <div className="flex items-center gap-2">
                 <span>Update Status:</span>
                 <Select onValueChange={handleStatusChange} defaultValue={pageState.task.status}>
-                  <SelectTrigger className="w-[180px] bg-zinc-800 border-zinc-700 text-white">
+                  <SelectTrigger className="w-[180px] bg-[rgb(9 9 11)] border-zinc-700 text-white">
                     <SelectValue className="text-white" placeholder="Select a status" />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
-                    <SelectItem value="Not Started">Not Started</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectContent className="bg-black text-white">
+                    <SelectItem value="ongoing">Ongoing</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="missed">Missed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

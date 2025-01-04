@@ -81,7 +81,6 @@ export function Create({ userMail, listId }) {
           onSuccess: (data) => {
             console.log("Task created successfully:", data)
             resetForm()
-            refetch();
             setOpen(false) // Close the sheet after successful submission
           },
           onError: (error) => {

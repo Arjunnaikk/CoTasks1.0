@@ -87,14 +87,21 @@ export function useCreateTeamMutation() {
 export function useUpdateTaskStatusMutation() {
   return useMutation({
     mutationKey: ["updateTask"],
-    mutationFn: async ({ title, names, status }) => {
-      // Log the correct request data
-      console.log("Sending data:", JSON.stringify({ user_gmail : title, task_name: names, status: status }));
+    mutationFn: async ({ user_gmail, task_name, status }) => {
+      console.log("Sending data:", JSON.stringify({ 
+        user_gmail, 
+        task_name, 
+        status 
+      }));
 
       return (
-        await axios.post(
+        await axios.patch(
           "https://cotask.somprajapati24-dcf.workers.dev/myTask/update",
-          JSON.stringify({ title: title, user_array: names }), // Send as stringified JSON with 'title' and 'user_array' keys
+          JSON.stringify({ 
+            user_gmail,
+            task_name,
+            status
+          }),
           {
             headers: { 
               "Content-Type": "application/json",
@@ -111,29 +118,6 @@ export function useUpdateTaskStatusMutation() {
 
 
 //Create Task
-// export function useCreateMyTaskMutation() {
-//   return useMutation({
-//     mutationKey: ["createMyTask"],
-//     mutationFn: async ({ title, description, priority, end_d, taskStatus, userMail, listName }) => {
-//       // Log the request data
-//       // console.log("Sending data:", JSON.stringify({ name: title })); // Changed title to name
-      
-//       return (
-//         await axios.post(
-//           "https://cotask.somprajapati24-dcf.workers.dev/myTask/create",
-//           JSON.stringify({ title, description,status:taskStatus, end_d, priority, user_gmail:userMail,list_name:listName }), // Send as stringified JSON with 'name' key
-//           {
-//             headers: { 
-//               "Content-Type": "application/json",
-//             },
-//           }
-//         )
-//       ).data;
-//     },
-//     retry: false,
-//   });
-// }
-
 export function useCreateMyTaskMutation() {
   return useMutation({
     mutationKey: ["createTask"],
@@ -206,6 +190,7 @@ export function useCreateMyTeamTaskMutation() {
 }
 
 
+//Delete MyTask
 export function useDeleteMyTaskMutation() {
   return useMutation({
     mutationKey: ["deleteTask"],
@@ -224,6 +209,38 @@ export function useDeleteMyTaskMutation() {
         data: JSON.stringify({
           user_gmail: userMail,
           task_id: taskId
+        }),
+      }
+    );
+    return response.data;
+  } catch (error) {
+        console.error("API call error:", error);
+        throw error; // Allows onError to catch this error in the calling component
+      }
+    },
+    retry: false, // Keeps retry disabled for specific control
+  });
+}
+
+//Delete List
+export function useDeleteListMutation() {
+  return useMutation({
+    mutationKey: ["deleteList"],
+    mutationFn: async ({ userMail, name }) => {
+      // console.log("Deleting task data:");
+    //   console.log(typeof formattedEndD); // Outputs: 'object'
+    // console.log(formattedEndD instanceof Date); // Outputs: true
+
+    try {
+    const response = await axios.delete(
+      "https://cotask.somprajapati24-dcf.workers.dev/list/delete",
+      {
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        data: JSON.stringify({
+          user_gmail: userMail,
+          name: name
         }),
       }
     );
