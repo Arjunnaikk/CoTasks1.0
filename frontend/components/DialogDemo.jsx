@@ -38,7 +38,7 @@ export function DialogDemo({ email }) {
           {
             onSuccess: (data) => {
               console.log("Success:", data)
-              router.push(`/mypage/College/task/8`)
+              router.push(`/mypage/`)
               setTitle('')
               setOpen(false)
             },

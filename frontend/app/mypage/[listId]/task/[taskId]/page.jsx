@@ -22,6 +22,8 @@ import List from "@/components/List";
 import EmptyCard from '@/components/EmptyCard';
 import SkeletonDemo from "@/components/SkeletonDemo";
 import { Input } from "@/components/ui/input";
+import { CheckCheck } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 
 const STATUS_COLORS = {
   'Not Started': 'bg-red-500',
@@ -267,56 +269,81 @@ const Page = ({ params }) => {
       </div>
 
       {/* Task Detail */}
-      <div className='h-[90.8vh] w-[35vw] rounded-md bg-[#09090b] top-[55px] left-[10px] sticky m-2 flex flex-col border border-zinc-800'>
-        <div className='text-white flex justify-between m-1 p-3 cursor-pointer'>
-        <Trash2 onClick={handleDelete} className=" hover:text-red-600"/>
-        </div>
-        <div className='h-[1px] w-full bg-zinc-800'></div>
-        {pageState.task && (
-          <>
-            <div className='flex flex-row p-1 justify-between'>
-              <div className='flex flex-row p-0'>
-                <h1 className='text-2xl font-semibold text-white flex p-2 items-center'>{pageState.task.title}</h1>
-              </div>
-              <div className='text-white font-thin text-xs flex m-2 items-end'>
-                <p>{pageState.task.start_d.split(' ')[0]}</p>
-              </div>
-            </div>
-            <div className='h-[1px] w-full bg-zinc-800'></div>
-            <div className='h-[40vh] text-sm font-inter font-poppins text-white flex p-3'>
-              <span>{pageState.task.descrption}</span>
-            </div>
-            <div className='h-[1px] w-full bg-zinc-800'></div>
-            <div className='p-3 text-white flex flex-col gap-3'>
-              <div className="flex items-center gap-2">
-                <span>Update Status:</span>
-                <Select onValueChange={handleStatusChange} defaultValue={pageState.task.status}>
-                  <SelectTrigger className="w-[180px] bg-[rgb(9 9 11)] border-zinc-700 text-white">
-                    <SelectValue className="text-white" placeholder="Select a status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-black text-white">
-                    <SelectItem value="ongoing">Ongoing</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="missed">Missed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className='h-[1px] w-full bg-zinc-800'></div>
-            <div className='w-auto flex flex-row gap-5 justify-between items-center p-3 text-white'>
-              <div className="flex items-center gap-2">
-                <span>Priority:</span>
-                {pageState.task.priority === 1 && <span className="flex items-center">Low <ArrowDown className="ml-1" /></span>}
-                {pageState.task.priority === 2 && <span className="flex items-center">Mid <ArrowRight className="ml-1" /></span>}
-                {pageState.task.priority === 3 && <span className="flex items-center">High <ArrowUp className="ml-1" /></span>}
-              </div>
-              
-            </div>
-            <div className='h-[1px] w-full bg-zinc-800'></div>
-          </>
-        )}
+<div className='h-[90.8vh] w-[35vw] rounded-md bg-[#09090b] top-[55px] left-[10px] sticky m-2 flex flex-col border border-zinc-800 overflow-hidden'>
+  {pageState.task && (
+    <>
+      <div className='bg-zinc-900 p-4 flex justify-between items-center'>
+        <h1 className='text-2xl font-semibold text-white truncate'>{pageState.task.title}</h1>
+        <Trash2 onClick={handleDelete} className="text-zinc-400 hover:text-red-600 cursor-pointer transition-colors" />
       </div>
-      <Create userMail={session?.user?.email} listId={params.listId} onTaskCreated={() => {}} />
+      <div className='flex-grow overflow-y-auto p-6 space-y-6'>
+        <div>
+          <h2 className='text-lg font-semibold text-zinc-300 mb-2'>Description</h2>
+          <p className='text-zinc-400 whitespace-pre-wrap'>{pageState.task.descrption}</p>
+        </div>
+        <div>
+          <h2 className='text-lg font-semibold text-zinc-300 mb-2'>Status</h2>
+          <Select onValueChange={handleStatusChange} defaultValue={pageState.task.status}>
+            <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white">
+              <SelectValue placeholder="Select a status" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-900 text-white">
+              <SelectItem value="ongoing">Ongoing</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="missed">Missed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <h2 className='text-lg font-semibold text-zinc-300 mb-2'>Priority</h2>
+          <div className='p-3 bg-zinc-900 rounded-md'>
+            {pageState.task.priority === 0 && pageState.task.status === 'completed' && (
+              <div className="flex items-center text-green-500">
+                <CheckCheck className="mr-2" />
+                <span className="font-semibold">Task Completed Successfully!</span>
+              </div>
+            )}
+            {pageState.task.priority === 0 && pageState.task.status === 'missed' && (
+              <div className="flex items-center text-red-500">
+                <CircleAlert className="mr-2" />
+                <span className="font-semibold">Deadline Missed - Take Action!</span>
+              </div>
+            )}
+            {pageState.task.priority === 1 && (
+              <div className="flex items-center text-blue-400">
+                <ArrowDown className="mr-2" />
+                <span>Can be addressed later</span>
+              </div>
+            )}
+            {pageState.task.priority === 2 && (
+              <div className="flex items-center text-orange-400">
+                <ArrowRight className="mr-2" />
+                <span>Requires attention soon</span>
+              </div>
+            )}
+            {pageState.task.priority === 3 && (
+              <div className="flex items-center text-purple-400">
+                <ArrowUp className="mr-2" />
+                <span>Immediate action needed</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className='bg-zinc-900 p-4 flex justify-between items-center'>
+        <div>
+          <span className='text-zinc-400 text-sm'>Created on</span>
+          <p className='text-white font-semibold'>{pageState.task.start_d.split(' ')[0]}</p>
+        </div>
+        <Create userMail={session?.user?.email} listId={params.listId} onTaskCreated={() => {}} />
+        <div className='text-right'>
+          <span className='text-zinc-400 text-sm'>Due Date</span>
+          <p className='text-white font-semibold'>{pageState.task.end_d.split('T')[0]}</p>
+        </div>
+      </div>
+    </>
+  )}
+</div>
     </>
   );
 }

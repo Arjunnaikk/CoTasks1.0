@@ -1,8 +1,9 @@
 'use client'
 
-import { ArrowDown, ArrowRight, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUp, CheckCheck } from 'lucide-react';
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from 'next/navigation';
+import { CircleAlert } from 'lucide-react';
 
 const Card = ({ myTask, keye, listName }) => {
     const router = useRouter();
@@ -15,9 +16,9 @@ const Card = ({ myTask, keye, listName }) => {
     const task = myTask.newTask[keye]; // Retrieve the task
     // Define the status colors
     const STATUS_COLORS = {
-        'missed': 'bg-red-500',
-        'ongoing': 'bg-yellow-500',
-        'completed': 'bg-green-500',
+        'missed': 'bg-[#ff2828]',
+        'ongoing': 'bg-[#ffd630]',
+        'completed': 'bg-[#53fa31]',
         'default': 'bg-gray-500',
     };
     
@@ -29,7 +30,7 @@ const Card = ({ myTask, keye, listName }) => {
         const taskId = task.task_id; // Retrieve the task_id
         router.push(`/mypage/${listName}/task/${taskId}`);
     };
-
+console.log("helololo",task)
     return (
         <div onClick={handleClick} className='bg-#09090b border border-zinc-800 border-1 w-[35vw] h-[22vh] rounded-lg rounded-b-none flex flex-col relative hover:bg-zinc-800 transition-colors cursor-pointer'>
             <div className='flex flex-row'>
@@ -38,7 +39,9 @@ const Card = ({ myTask, keye, listName }) => {
             <div className='text-sm font-inter font-poppins text-white flex pl-10 pr-1 py-1 overflow-hidden w-[70%] h-[auto]'>
                 <span>{task.descrption.length > 100 ? `${task.descrption.slice(0,100)}...`: task.descrption}</span>
             </div>
-            <div className='absolute right-10 top-2 w-auto flex flex-row gap-5 justify-center text-white'>
+            <div className='absolute right-10 top-4 w-auto flex flex-row gap-5 justify-center text-white'>
+            {task.priority === 0 && task.status =='completed' && <CheckCheck />}
+            {task.priority === 0 && task.status =='missed' && <CircleAlert />}
                 {task.priority === 1 && <ArrowDown />}
                 {task.priority === 2 && <ArrowRight />}
                 {task.priority === 3 && <ArrowUp />}
@@ -46,8 +49,8 @@ const Card = ({ myTask, keye, listName }) => {
             <div className='absolute right-7 bottom-3 text-white font-thin text-xs'>
                 {task.start_d.split(' ')[0]}
             </div>
-            <div className='absolute bottom-[-3px] w-full h-1 rounded-full  text-white'> 
-            <Badge className={`${getStatusColor(task.status)} flex justify-center text-white`}>
+            <div className='absolute bottom-[-3px] w-full'> 
+            <Badge className={`${getStatusColor(task.status)} flex justify-center h-[2px]`}>
               </Badge>
               </div>
         </div>

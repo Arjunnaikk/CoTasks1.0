@@ -56,7 +56,7 @@ const Sidebar = () => {
           )}
 
           {/* Link to the users page */}
-          <Link href={`/mygroups/MiniProject/task/10`}>
+          <Link href={`/mygroups/`}>
             <Users />
           </Link>
 

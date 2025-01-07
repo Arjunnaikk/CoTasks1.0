@@ -7,9 +7,7 @@ import { useState } from "react"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Sheet,
-  SheetClose,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -19,16 +17,6 @@ import { Plus } from 'lucide-react'
 import SelectDemo from "./SelectDemo"
 import DatePickerDemo from "./DatePicker"
 import { useCreateMyTeamTaskMutation } from "@/services/mutations"
-import { PeopleSelect } from "./PeopleSelect"
-
-const people = [
-  { value: "alice@example.com", label: "Alice Johnson" },
-  { value: "bob@example.com", label: "Bob Smith" },
-  { value: "charlie@example.com", label: "Charlie Brown" },
-  { value: "david@example.com", label: "David Lee" },
-  { value: "eva@example.com", label: "Eva Martinez" },
-  // Add more people as needed
-]
 
 export function Create({ userMail, teamId }) {
   const [form, setForm] = useState({
@@ -65,9 +53,10 @@ export function Create({ userMail, teamId }) {
     console.log(form.end_d);
   };
 
-  const handleAssignToChange = (selectedEmails) => {
-    setForm(prev => ({ ...prev, assign_to: selectedEmails }));
-  };
+  const handleAssignToChange = (e) => {
+    const value = e.target.value
+    setForm(prev => ({ ...prev, assign_to: value.split(",").map(email => email.trim()) }))
+  }
 
   const resetForm = () => {
     setForm({
@@ -174,17 +163,14 @@ export function Create({ userMail, teamId }) {
                 <Label htmlFor="assign_to" className="text-right">
                   Assign to People
                 </Label>
-                <PeopleSelect
-                  value={form.assign_to}
+                <Input
                   onChange={handleAssignToChange}
+                  id="assign_to"
+                  name="assign_to"
+                  value={form.assign_to.join(", ")}
+                  className="col-span-3 bg-black text-white"
+                  placeholder="Enter email addresses, separated by commas"
                 />
-                {form.assign_to.length > 0 && (
-                  <div className="mt-2 text-sm text-gray-400">
-                    Selected: {form.assign_to.map(email =>
-                      people.find(p => p.value === email)?.label
-                    ).join(', ')}
-                  </div>
-                )}
               </div>
               <SheetFooter>
                 <Button
