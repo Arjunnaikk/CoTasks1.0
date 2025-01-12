@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 
-export function AlertDialogDemo({ isSelected2, handleListDelete }) {
+export function AlertDialogDemo({ isSelected2, handleListDelete, handleTeamDelete }) {
   return (
       <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -44,8 +44,13 @@ export function AlertDialogDemo({ isSelected2, handleListDelete }) {
                   <AlertDialogAction
                       onClick={(event) => {
                           event.stopPropagation();
-                          handleListDelete();
-                      }}
+                          if (handleListDelete) {
+                            handleListDelete();
+                        } else {
+                            handleTeamDelete();
+                        }
+                        }
+                      }
                   >
                       Continue
                   </AlertDialogAction>

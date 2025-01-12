@@ -106,12 +106,12 @@ export function Create({ userMail, teamId }) {
   };
 
   return (
-    <div className="fixed bottom-5 right-5">
+    <div className="">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button
             variant="outline"
-            className='bg-zinc-950 text-zinc-100 rounded-full hover:bg-zinc-900 hover:text-zinc-100 w-10 p-0'
+            className='bg-zinc-950 text-zinc-100 rounded-[10px] hover:bg-zinc-900 border-[1px] hover:text-zinc-100 w-[11vw] p-0'
           >
             <Plus />
           </Button>
