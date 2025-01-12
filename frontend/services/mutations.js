@@ -253,3 +253,69 @@ export function useDeleteListMutation() {
     retry: false, // Keeps retry disabled for specific control
   });
 }
+
+//Delete Team
+export function useDeleteTeamMutation() {
+  return useMutation({
+    mutationKey: ["deleteTeam"],
+    mutationFn: async ({ userMail, teamName }) => {
+    //   console.log("Deleting task data:");
+    //   console.log(typeof formattedEndD); // Outputs: 'object'
+    // console.log(formattedEndD instanceof Date); // Outputs: true
+
+    try {
+    const response = await axios.delete(
+      "https://cotask.somprajapati24-dcf.workers.dev/team/delete",
+      {
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        data: JSON.stringify({
+          user_gmail: userMail,
+          team_name: teamName
+        }),
+      }
+    );
+    return response.data;
+  } catch (error) {
+        console.error("API call error:", error);
+        throw error; // Allows onError to catch this error in the calling component
+      }
+    },
+    retry: false, // Keeps retry disabled for specific control
+  });
+}
+
+
+
+//Delete Team Task
+export function useDeleteTeamTaskMutation() {
+  return useMutation({
+    mutationKey: ["deleteTeamTask"],
+    mutationFn: async ({ teamName, taskId }) => {
+      // console.log("Deleting task data:");
+    //   console.log(typeof formattedEndD); // Outputs: 'object'
+    // console.log(formattedEndD instanceof Date); // Outputs: true
+
+    try {
+    const response = await axios.delete(
+      "https://cotask.somprajapati24-dcf.workers.dev/teamTask/delete",
+      {
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        data: JSON.stringify({
+          task_id: taskId,
+          team_name: teamName
+        }),
+      }
+    );
+    return response.data;
+  } catch (error) {
+        console.error("API call error:", error);
+        throw error; // Allows onError to catch this error in the calling component
+      }
+    },
+    retry: false, // Keeps retry disabled for specific control
+  });
+}

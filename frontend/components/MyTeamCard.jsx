@@ -1,5 +1,8 @@
 'use client'
 
+import { Badge } from 'lucide-react';
+import { CircleAlert } from 'lucide-react';
+import { CheckCheck } from 'lucide-react';
 import { ArrowDown, ArrowRight, ArrowUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -12,12 +15,24 @@ const MyTeamCard = ({ myTeamTask, keye, teamName }) => {
         return null; // Return null or a fallback UI if data is not available
     }
     
+    
+
     const task = myTeamTask[keye]; // Retrieve the task
 
     const handleClick = () => {
         const taskId = task.task_id; // Retrieve the task_id
         router.push(`/mygroups/${teamName}/task/${taskId}`);
     };
+
+    const STATUS_COLORS = {
+        'missed': 'bg-[#ff2828]',
+        'ongoing': 'bg-[#ffd630]',
+        'completed': 'bg-[#53fa31]',
+        'default': 'bg-gray-500',
+    };
+    
+    // Function to get the appropriate status color
+    const getStatusColor = (status) => STATUS_COLORS[status] || STATUS_COLORS.default;
 
     return (
         <div onClick={handleClick} className='bg-#09090b border border-zinc-800 border-1 w-[35vw] h-[22vh] rounded-lg flex flex-col relative hover:bg-zinc-800 transition-colors cursor-pointer'>
@@ -30,6 +45,8 @@ const MyTeamCard = ({ myTeamTask, keye, teamName }) => {
                 <span>{task.descrption}</span>
             </div>
             <div className='absolute right-10 top-2 w-auto flex flex-row gap-5 justify-center text-white'>
+            {task.priority === 0 && task.status =='completed' && <CheckCheck />}
+            {task.priority === 0 && task.status =='missed' && <CircleAlert />}
                 {task.priority === 1 && <ArrowDown />}
                 {task.priority === 2 && <ArrowRight />}
                 {task.priority === 3 && <ArrowUp />}
@@ -37,6 +54,10 @@ const MyTeamCard = ({ myTeamTask, keye, teamName }) => {
             <div className='absolute right-7 bottom-3 text-white font-thin text-xs'>
                 {task.start_d.split(' ')[0]}
             </div>
+            <div className='absolute bottom-0 w-full'> 
+            <Badge className={`${getStatusColor(task.status)} flex justify-center w-full h-[2px]`}>
+              </Badge>
+              </div>
         </div>
     );
 }

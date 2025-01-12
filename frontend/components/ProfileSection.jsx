@@ -2,9 +2,16 @@
 
 import React from "react";
 import { useSession } from "next-auth/react";
+import { useGetUserQuery } from "@/services/queries"
 
 const ProfileSection = () => {
   const { data: session } = useSession()
+  const { data: userData, isLoading, error } = useGetUserQuery()
+  console.log("WTF",userData)
+  const user = userData?.user?.find((user) =>
+    user.name === session?.user?.name
+);
+console.log("WTFffff",user?.user_id)
   return (
     <div className="text-white w-[90%]">
       <h3 className="text-2xl font-bold mb-4">Profile Settings</h3>
@@ -12,7 +19,7 @@ const ProfileSection = () => {
       {/* DP (Display Picture) */}
       <div className="mb-4">
         <label className="block text-sm font-semibold mb-2">Display Picture</label>
-        <img className='mx-1 my-2 w-[70px] h-[70px]' src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${session?.user?.name}`} alt="" />
+        <img className='mx-1 my-2 w-[70px] h-[70px]' src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${user?.user_id}`} alt="" />
       </div>
       
       {/* Username */}

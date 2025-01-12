@@ -109,9 +109,6 @@ const Page = ({ params }) => {
         userMail: session?.user?.email,
         name: listName,
       });
-      
-      
-      
       router.push('/mypage');
     } catch (error) {
       console.error("Error deleting task:", error);
@@ -152,13 +149,11 @@ const Page = ({ params }) => {
         task_name: pageState.task.title, // Assuming the task has a title field
         status: newStatus,
       });
-  
       // Update the state based on the mutation response
       setPageState((prev) => {
         const updatedTasks = prev.tasks.map((t) =>
           t.task_id === prev.task.task_id ? { ...t, status: newStatus } : t
         );
-  
         return {
           ...prev,
           task: { ...prev.task, status: newStatus },
@@ -187,7 +182,7 @@ const Page = ({ params }) => {
     }));
   };
 
-
+  
   const handleSearch = (e) => {
     setPageState(prev => ({ ...prev, searchQuery: e.target.value }));
   };

@@ -16,10 +16,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useCreateTeamMutation } from "@/services/mutations"
 
-export function DialogDemo({ email }) {
+export function DialogDemo({ email, username}) {
   const [form, setForm] = useState({
     title: '',
-    user_array: []
+    user_array: [username,""]
   })
   const [open, setOpen] = useState(false)
   const router = useRouter()
