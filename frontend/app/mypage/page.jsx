@@ -76,7 +76,27 @@ const Page = ({ params }) => {
       </div>
 
       {/* My Page */}
-    </>
+<div className="flex-1 p-8 flex flex-col">
+  <div className="mb-8 text-center">
+    <h1 className="text-3xl font-bold text-white">Create Your List Of Tasks</h1>
+    <div className="h-[1px] bg-zinc-700 mt-2 w-[50%]m-auto"></div>
+    <p className="text-zinc-400 mt-4">Select a list from the sidebar or create a new one to get started.</p>
+  </div>
+  
+  <div className="flex items-center justify-center flex-1">
+    <div className="text-center p-8 border border-dashed border-zinc-700 rounded-lg max-w-lg">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-zinc-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+      <h3 className="text-xl font-medium text-white mb-2">No list selected</h3>
+      <p className="text-zinc-400 mb-6">Choose a list from the sidebar or create a new one to start organizing your tasks.</p>
+      <div className=''>
+          <DialogDemo email={session?.user?.email} />
+        </div>
+    </div>
+  </div>
+</div>
+</>
   );
 };
 

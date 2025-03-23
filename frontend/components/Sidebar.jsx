@@ -61,9 +61,9 @@ const Sidebar = () => {
           </Link>
 
           {/* Link to the messages page */}
-          <Link href="/mychats">
+          {/* <Link href="/mychats">
             <MessageCircleMore />
-          </Link>
+          </Link> */}
 
           {/* Link to the settings page */}
           <Link href="/mysettings">

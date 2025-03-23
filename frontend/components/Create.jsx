@@ -113,31 +113,48 @@ export function Create({ userMail, listId }) {
               <SheetTitle className='text-white text-2xl font-bold'>Create a task</SheetTitle>
             </SheetHeader>
             <div className="flex flex-col gap-8 mt-5">
-              <div className="flex flex-col items-start gap-2">
-                <Label htmlFor="title" className="text-right">
-                  Title
-                </Label>
-                <Input
-                  onChange={handleChange}
-                  id="title"
-                  name='title'
-                  value={form.title}
-                  className="col-span-3 bg-black text-white"
-                  required
-                />
-              </div>
-              <div className="flex flex-col items-start gap-2">
-                <Label htmlFor="description" className="text-right">
-                  Description
-                </Label>
-                <Textarea
-                  onChange={handleChange}
-                  id="description"
-                  name='description'
-                  value={form.description}
-                  className="col-span-3 bg-black text-white"
-                />
-              </div>
+            <div className="flex flex-col items-start gap-2">
+        <Label htmlFor="title" className="text-right">
+          Title
+        </Label>
+        <div className="w-full">
+          <Input
+            onChange={handleChange}
+            id="title"
+            name="title"
+            value={form.title}
+            className="w-full bg-black text-white"
+            required
+            maxLength={50}
+          />
+          {form.title.length >= 40 &&
+          <p className={`text-xs mt-1 ${form.title.length >= 50 ? "text-red-500" : "text-gray-400"}`}>
+            {form.title.length}/{50} characters
+          </p>
+          }
+        </div>
+      </div>
+      
+      <div className="flex flex-col items-start gap-2">
+        <Label htmlFor="description" className="text-right">
+          Description
+        </Label>
+        <div className="w-full">
+          <Textarea
+            onChange={handleChange}
+            id="description"
+            name="description"
+            value={form.description}
+            className="w-full bg-black text-white"
+            maxLength={300}
+          />
+          {form.description.length >= 250 &&
+          <p className={`text-xs mt-1 ${form.description.length >= 300 ? "text-red-500" : "text-gray-400"}`}>
+            {form.description.length}/{300} characters
+          </p>
+          }
+        </div>
+      </div>
               <div>
                 <SelectDemo
                   value={form.priority}
@@ -154,7 +171,7 @@ export function Create({ userMail, listId }) {
               <SheetFooter>
                 <Button
                   type="submit"
-                  className='border border-zinc-800 bg-black'
+                  className='border border-zinc-800 bg-black w-full'
                   disabled={mutation.isLoading}
                 >
                   {mutation.isLoading ? 'Creating...' : 'Create Task'}

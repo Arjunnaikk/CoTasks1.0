@@ -83,21 +83,27 @@ export function DialogDemo({ email, username}) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
+          <div className="flex flex-col py-4">
+            <div className="flex flex-row items-center gap-4">
               <Label htmlFor="title" className="text-right text-white">
-                Name
+                Name:
               </Label>
               <Input
                 onChange={handleChange}
                 id="title"
                 name="title"
                 value={form.title}
+                maxLength={50}
                 className="col-span-3 bg-zinc-900 border-zinc-800 text-white"
                 placeholder="Enter list name"
                 required
               />
             </div>
+              {form.title.length >= 40 &&
+          <p className={`text-xs mt-2 m-auto ${form.title.length >= 50 ? "text-red-500" : "text-gray-400"}`}>
+            {form.title.length}/{50} characters
+          </p>
+          }
             <div className="flex flex-col items-start gap-2 mt-6 text-white">
               <Label htmlFor="user_array" className="text-right">
                 Add People

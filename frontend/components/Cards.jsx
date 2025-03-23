@@ -30,7 +30,7 @@ const Card = ({ myTask, keye, listName }) => {
         const taskId = task.task_id; // Retrieve the task_id
         router.push(`/mypage/${listName}/task/${taskId}`);
     };
-console.log("helololo",task)
+// console.log("helololo",task)
     return (
         <div onClick={handleClick} className='bg-#09090b border border-zinc-800 border-1 w-[35vw] h-[22vh] rounded-lg rounded-b-none flex flex-col relative hover:bg-zinc-800 transition-colors cursor-pointer'>
             <div className='flex flex-row'>

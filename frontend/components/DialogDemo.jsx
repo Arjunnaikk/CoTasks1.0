@@ -21,6 +21,8 @@ export function DialogDemo({ email }) {
     const [open, setOpen] = useState(false)
     const router = useRouter()
     const mutation = useCreateListMutation()
+
+    const maxLength = 20;
     
     const handleChange = (e) => {
         setTitle(e.target.value)
@@ -73,20 +75,28 @@ export function DialogDemo({ email }) {
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-right text-white">
-                                Name
-                            </Label>
-                            <Input 
-                                onChange={handleChange}
-                                id="name"
-                                name="title"
-                                value={title}
-                                className="col-span-3 bg-zinc-900 border-zinc-800 text-white"
-                                placeholder="Enter list name"
-                                required
-                            />
-                        </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right text-white">
+                Name
+            </Label>
+            <div className="col-span-3">
+                <Input 
+                    onChange={handleChange}
+                    id="name"
+                    name="title"
+                    value={title}
+                    className="bg-zinc-900 border-zinc-800 text-white"
+                    placeholder="Enter list name"
+                    required
+                    maxLength={maxLength}
+                />
+                {title.length >= 10 &&
+                <p className={`text-xs mt-1 ${title.length >= maxLength ? "text-red-500" : "text-gray-400"}`}>
+                    {title.length}/{maxLength} characters
+                </p>
+                }
+            </div>
+        </div>
                     </div>
                     <DialogFooter>
                         <Button 

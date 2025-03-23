@@ -3,7 +3,6 @@
 import Sidebar from "@/components/Sidebar";
 import React, { useState, useEffect } from "react";
 import ProfileSection from "@/components/ProfileSection";
-import AppearanceSection from "@/components/AppearanceSection";
 import FeedbackSection from "@/components/FeedbackSection";
 
 const Page = () => {
@@ -52,14 +51,6 @@ const Page = () => {
           }`}
         >
           Profile
-        </button>
-        <button
-          onClick={() => setSelectedSection("appearance")}
-          className={`text-white py-2 px-4 rounded-md w-[90%] text-left ${
-            selectedSection === "appearance" ? "bg-zinc-800" : "bg-#18181b"
-          }`}
-        >
-          Appearance
         </button>
         <button
           onClick={() => setSelectedSection("feedback")}

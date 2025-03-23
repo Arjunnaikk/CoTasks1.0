@@ -165,6 +165,8 @@ const Page = ({ params }) => {
       console.error("Failed to update task status:", error);
     }
   };
+
+  console.log("PageState:", pageState);
   
 
   const handleSort = () => {
@@ -264,7 +266,16 @@ const Page = ({ params }) => {
       </div>
 
       {/* Task Detail */}
-<div className='h-[90.8vh] w-[35vw] rounded-md bg-[#09090b] top-[55px] left-[10px] sticky m-2 flex flex-col border border-zinc-800 overflow-hidden'>
+          {params.taskId === '0' ? 
+           <div className='h-[90.8vh] w-[35vw] rounded-md bg-[#09090b] top-[55px] left-[10px] sticky m-2 flex flex-col border border-zinc-800 overflow-hidden'>
+            <div className="bg-zinc-900  p-4 flex items-end justify-center h-full">
+            <div className=' flex justify-between items-center'>
+           <Create className="w-full" userMail={session?.user?.email} listId={params.listId} onTaskCreated={() => {}} />
+            </div>
+           </div>
+         </div>
+           :
+            <div className='h-[90.8vh] w-[35vw] rounded-md bg-[#09090b] top-[55px] left-[10px] sticky m-2 flex flex-col border border-zinc-800 overflow-hidden'>
   {pageState.task && (
     <>
       <div className='bg-zinc-900 p-4 flex justify-between items-center'>
@@ -338,7 +349,9 @@ const Page = ({ params }) => {
       </div>
     </>
   )}
-</div>
+</div> }
+
+
     </>
   );
 }

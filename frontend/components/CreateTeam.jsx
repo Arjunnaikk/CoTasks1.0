@@ -131,9 +131,15 @@ export function Create({ userMail, teamId }) {
                   id="title"
                   name='title'
                   value={form.title}
+                  maxLength={50}
                   className="col-span-3 bg-black text-white"
                   required
                 />
+                {form.title.length >= 40 &&
+          <p className={`text-xs mt-1 ${form.title.length >= 50 ? "text-red-500" : "text-gray-400"}`}>
+            {form.title.length}/{50} characters
+          </p>
+          }
               </div>
               <div className="flex flex-col items-start gap-2">
                 <Label htmlFor="description" className="text-right">
@@ -144,8 +150,14 @@ export function Create({ userMail, teamId }) {
                   id="description"
                   name='description'
                   value={form.description}
+                  maxLength={300}
                   className="col-span-3 bg-black text-white"
                 />
+                {form.description.length >= 250 &&
+          <p className={`text-xs mt-1 ${form.description.length >= 300 ? "text-red-500" : "text-gray-400"}`}>
+            {form.description.length}/{300} characters
+          </p>
+          }
               </div>
               <div>
                 <SelectDemo
