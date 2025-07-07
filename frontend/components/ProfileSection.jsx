@@ -7,11 +7,9 @@ import { useGetUserQuery } from "@/services/queries"
 const ProfileSection = () => {
   const { data: session } = useSession()
   const { data: userData, isLoading, error } = useGetUserQuery()
-  console.log("WTF",userData)
   const user = userData?.user?.find((user) =>
     user.name === session?.user?.name
 );
-console.log("WTFffff",user?.user_id)
   return (
     <div className="text-white w-[90%]">
       <h3 className="text-2xl font-bold mb-4">Profile Settings</h3>

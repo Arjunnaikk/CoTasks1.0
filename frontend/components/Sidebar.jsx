@@ -7,41 +7,7 @@ import { useGetListQuery, useGetMyTaskQuery } from "@/services/queries"; // Ensu
 import { useSession } from "next-auth/react";
 
 const Sidebar = () => {
-  const { data: session } = useSession(); // Get the current user session
-
-  // Use hooks unconditionally
-  // const { data: listData, isLoading: listLoading, error: listError } = useGetListQuery(session?.user?.email);
-  
-  // Initialize task data to null initially
-  // let taskData = null;
-
-  // Select the first list from the array
-  // const firstList = listData?.newList?.[0]; // Access the first list safely
-  
-  // Fetch tasks for the first list if it exists
-  // if (firstList) {
-  //   taskData = useGetMyTaskQuery(session?.user?.email, firstList.id); // Fetch tasks if firstList exists
-  // }
-
-  // if (listLoading || (firstList && taskData?.isLoading)) return <div>Loading...</div>; // Loading state
-  // if (listError) return <div>Error: {listError.message}</div>; // Error handling
-
-  // Select the first task from the task data
-  // const firstTask = taskData?.data?.newTask?.[0]; // Assuming newTask is the array containing tasks
-  // const firstTaskId = firstTask ? firstTask.task_id : null; // Store the first task's ID if it exists
-
-  // // Debugging output
-  // if (firstList) {
-  //   console.log("First List Name:", firstList.name);
-  // } else {
-  //   console.log("No lists found.");
-  // }
-
-  // if (firstTask) {
-  //   console.log("First Task ID:", firstTask.task_id);
-  // } else {
-  //   console.log("No tasks found for the first list.");
-  // }
+  const { data: session } = useSession();
 
   return (
     <div className='flex flex-row'>

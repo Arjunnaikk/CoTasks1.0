@@ -15,8 +15,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useCreateTeamMutation } from "@/services/mutations"
+import { useToast } from "@/hooks/use-toast"
 
 export function DialogDemo({ email, username}) {
+  const { toast } = useToast()
   const [form, setForm] = useState({
     title: '',
     user_array: [username,""]
@@ -27,7 +29,6 @@ export function DialogDemo({ email, username}) {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
-    console.log(form)
   }
 
   const handleAssignToChange = (e) => {
@@ -48,14 +49,23 @@ export function DialogDemo({ email, username}) {
         },
         {
           onSuccess: (data) => {
-            console.log("Success:", data)
             router.push(`/mygroups/${form.title}/task/8`)
             setForm({ title: '', user_array: [] }) // Reset form state
             setOpen(false)
+            toast({
+              title: "Team created successfully",
+              description: "Your team has been created.",
+            })
           },
           onError: (error) => {
             console.error("Mutation error:", error)
             alert("Failed to create list: " + error.message)
+            setOpen(false)
+            toast({
+              title: "Error",
+              description: "Failed to create team",
+              variant: "destructive",
+            })
           },
         }
       )

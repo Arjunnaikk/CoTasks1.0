@@ -5,6 +5,8 @@ import React from 'react';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGetMyTeamQuery } from "@/services/queries";
+import { useDeleteTeamMutation } from "@/services/mutations";
+import { toast } from "@/hooks/use-toast";
 import TeamList from '@/components/TeamList';
 import DialogDemoTeam from '@/components/DialogDemoTeam';
 import SkeletonDemo from "@/components/SkeletonDemo";
@@ -15,6 +17,8 @@ const Page = ({ params }) => {
     const router = useRouter();
     const { data: session } = useSession();
     const [selectedTeam, setSelectedTeam] = useState(params.teamId)
+
+    const deleteTeamMutation = useDeleteTeamMutation()
 
     //if(session === null) return;
     if(!session) {
@@ -31,6 +35,28 @@ const Page = ({ params }) => {
         setSelectedTeam(teamTitle);
         router.push(`/mygroups/${teamTitle}/task/${taskId}`);
     };
+
+    const handleTeamDelete = async (teamName) => {
+        try {
+          await deleteTeamMutation.mutateAsync({
+            userMail: session?.user?.email,
+            teamName: teamName,
+          })
+          toast({
+            title: "Team deleted",
+            description: `Team "${teamName}" has been removed successfully.`,
+            variant: "default",
+          })
+          router.push("/mygroups")
+        } catch (error) {
+          console.error("Error deleting task:", error)
+          toast({
+            title: "Error",
+            description: "Failed to delete team. Please try again.",
+            variant: "destructive",
+          })
+        }
+      }
 
     return (
         <>
@@ -58,7 +84,7 @@ const Page = ({ params }) => {
                     </div>
                 </div>
                 <div className='fixed bottom-8'>
-                    <DialogDemoTeam email={session?.user?.email} />
+                    <DialogDemoTeam email={session?.user?.email} username={session?.user?.name}/>
                 </div>
             </div>
 

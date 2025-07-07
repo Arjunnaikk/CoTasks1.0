@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 
 const MyTeamCard = ({ myTeamTask, keye, teamName }) => {
     const router = useRouter();
-    // console.log("lol",myTeamTask)
     
     // Check if myTeamTask and newTask are defined
     if (!myTeamTask || !myTeamTask || myTeamTask.length <= keye) {

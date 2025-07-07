@@ -19,8 +19,10 @@ import { Plus } from "lucide-react"
 import SelectDemo from "./SelectDemo"
 import DatePickerDemo from "./DatePicker"
 import { useCreateMyTaskMutation } from "@/services/mutations"
+import { useToast } from "@/hooks/use-toast"
 
 export function Create({ userMail, listId }) {
+  const { toast } = useToast();
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -36,12 +38,10 @@ export function Create({ userMail, listId }) {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
-    console.log("Form updated:", form)
   }
 
   const handlePriorityChange = (value) => {
     setForm(prev => ({ ...prev, priority: value }))
-    console.log("Priority updated:", value)
   }
 
   const handleDateChange = (date) => {
@@ -50,8 +50,6 @@ export function Create({ userMail, listId }) {
     } else {
         setForm(prev => ({ ...prev, end_d: new Date(date).toISOString() }));
     }
-    console.log(typeof form.end_d); // Outputs: 'string'
-    console.log(form.end_d); // Outputs the ISO string representation of the date
 };
   
   const resetForm = () => {
@@ -67,34 +65,53 @@ export function Create({ userMail, listId }) {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    console.log("Submitting form:", form)
+    e.preventDefault();
+  
     if (!form.title.trim()) {
-      alert("Please enter a title")
-      return
+      toast({
+        title: "Error",
+        description: "Please enter a title",
+        variant: "destructive",
+      });
+      return;
     }
-    // console.log(form)
+  
     try {
       const result = await mutation.mutateAsync(
-        form, // Send the entire form object
+        {
+          ...form,
+          userArray: form.assign_to,
+        },
         {
           onSuccess: (data) => {
-            console.log("Task created successfully:", data)
-            resetForm()
-            setOpen(false) // Close the sheet after successful submission
+            toast({
+              title: "Success",
+              description: "Task created successfully",
+              variant: "dark",
+            });
+            resetForm();
+            setOpen(false);
           },
           onError: (error) => {
-            console.error("Mutation error:", error)
-            console.error("Error response:", error.response?.data)
-            alert("Failed to create task: " + (error.response?.data?.message || error.message))
+            console.error("Mutation error:", error);
+            console.error("Error response:", error.response?.data);
+            toast({
+              title: "Error",
+              description: "Failed to create task: " + (error.response?.data?.message || error.message),
+              variant: "destructive",
+            });
           },
         }
-      )
+      );
     } catch (error) {
-      console.error("Submit error:", error)
-      alert("Error creating task. Please try again.")
+      console.error("Submit error:", error);
+      toast({
+        title: "Error",
+        description: "Error creating task. Please try again.",
+        variant: "destructive",
+      });
     }
-  }
+  };
 
   return (
     <div className="">

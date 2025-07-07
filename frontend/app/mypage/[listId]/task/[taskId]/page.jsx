@@ -24,6 +24,9 @@ import SkeletonDemo from "@/components/SkeletonDemo";
 import { Input } from "@/components/ui/input";
 import { CheckCheck } from "lucide-react";
 import { CircleAlert } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import AlertDialogDemo from "@/components/AlertDialogDemo";
+
 
 const STATUS_COLORS = {
   'Not Started': 'bg-red-500',
@@ -36,6 +39,7 @@ const ErrorComponent = ({ error }) => <div>Error: {error?.message || "An error o
 
 const Page = ({ params }) => {
   const router = useRouter();
+  const {toast} = useToast();
   const { data: session, status } = useSession();
   
   const [pageState, setPageState] = useState({
@@ -103,15 +107,29 @@ const Page = ({ params }) => {
   };
   
   const handleListDelete = async (listName)=>{
-    console.log("helo broda",listName)
     try{
       await deleteListMutation.mutateAsync({
         userMail: session?.user?.email,
         name: listName,
-      });
-      router.push('/mypage');
+      },
+    {
+      onSuccess: () => {
+        toast({
+          title: "List deleted",
+          description: "List deleted successfully",
+          variant: "dark",
+        });
+        router.push('/mypage');
+      }
+    }
+    );
     } catch (error) {
       console.error("Error deleting task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete list",
+        variant: "destructive",
+      });
     }
   }
 
@@ -132,14 +150,24 @@ const Page = ({ params }) => {
         task: null
       }));
       
+      toast({
+        title: "Success",
+        description: "Task deleted successfully",
+        variant: "dark",
+      });
+      
       router.push(`/mypage/${params.listId}/task/0`);
     } catch (error) {
       console.error("Error deleting task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleStatusChange = async (newStatus) => {
-    console.log("Work man it aint funny")
     if (!pageState.task) return;
   
     try {
@@ -166,7 +194,6 @@ const Page = ({ params }) => {
     }
   };
 
-  console.log("PageState:", pageState);
   
 
   const handleSort = () => {
@@ -195,7 +222,7 @@ const Page = ({ params }) => {
   return (
     <>
       {/* Sidebar */}
-      <div className='w-[23vw] h-[90.8vh] bg-[#09090b] top-[55px] sticky rounded-md m-1 flex flex-col items-center gap-3 p-1 border-zinc-800 border-[0.5px]'>
+      <div className='w-[23vw] h-[90.8vh] bg-[#09090b] top-[55px] sticky rounded-md m-1 flex flex-col items-center gap-3 p-2 border-zinc-800 border-[0.5px]'>
         <div className='h-auto px-[1px] py-[10px] bg-[#09090b] w-[90%] rounded-md flex flex-col gap-2 justify-center items-center'>
           <h3 className='text-2xl font-bold text-white'>My List</h3>
           <div className='w-[21vw] h-[0.5px] bg-zinc-700'></div>
@@ -280,7 +307,10 @@ const Page = ({ params }) => {
     <>
       <div className='bg-zinc-900 p-4 flex justify-between items-center'>
         <h1 className='text-2xl font-semibold text-white truncate'>{pageState.task.title}</h1>
-        <Trash2 onClick={handleDelete} className="text-zinc-400 hover:text-red-600 cursor-pointer transition-colors" />
+        <AlertDialogDemo 
+    isSelected2={true}
+    handleListDelete={handleDelete}
+  />
       </div>
       <div className='flex-grow overflow-y-auto p-6 space-y-6'>
         <div>

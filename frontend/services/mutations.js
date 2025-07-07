@@ -6,7 +6,7 @@ export function useCreateUserMutation() {
   return useMutation({
     mutationKey: ["createUser"],
     mutationFn: async ({ name, gmail, imgText}) => {
-      console.log('imgText',imgText)
+      // console.log('imgText',imgText)
       try {
         const response = await axios.post(
           "https://cotask.somprajapati24-dcf.workers.dev/user/create",
@@ -38,7 +38,7 @@ export function useCreateListMutation() {
     mutationKey: ["createList"],
     mutationFn: async ({ title,email }) => {
       // Log the request data
-      console.log("Sending data:", JSON.stringify({ name: title })); // Changed title to name
+      // console.log("Sending data:", JSON.stringify({ name: title })); // Changed title to name
       
       return (
         await axios.post(
@@ -64,7 +64,7 @@ export function useCreateTeamMutation() {
     mutationKey: ["createTeam"],
     mutationFn: async ({ title, names }) => {
       // Log the correct request data
-      console.log("Sending data:", JSON.stringify({ title: title, user_array: names }));
+      // console.log("Sending data:", JSON.stringify({ title: title, user_array: names }));
 
       return (
         await axios.post(
@@ -88,11 +88,11 @@ export function useUpdateTaskStatusMutation() {
   return useMutation({
     mutationKey: ["updateTask"],
     mutationFn: async ({ user_gmail, task_name, status }) => {
-      console.log("Sending data:", JSON.stringify({ 
-        user_gmail, 
-        task_name, 
-        status 
-      }));
+      // console.log("Sending data:", JSON.stringify({ 
+      //   user_gmail, 
+      //   task_name, 
+      //   status 
+      // }));
 
       return (
         await axios.patch(

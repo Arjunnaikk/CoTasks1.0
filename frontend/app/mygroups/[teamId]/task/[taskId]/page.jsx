@@ -7,6 +7,7 @@ import { useGetMyTeamQuery, useGetMyTeamTaskQuery, useGetAssignedQuery } from "@
 import { useUpdateTaskStatusMutation, useDeleteTeamTaskMutation, useDeleteTeamMutation } from "@/services/mutations";
 import { Trash2, Menu, ArrowUp, ArrowDown, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -14,8 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import Sidebar from '@/components/Sidebar';
-import Create from '@/components/Create';
 import CreateTeam from '@/components/CreateTeam';
 import MyTeamCard from '@/components/MyTeamCard';
 import TeamList from '@/components/TeamList';
@@ -25,10 +24,14 @@ import SkeletonDemo from "@/components/SkeletonDemo";
 import { CheckCheck } from "lucide-react";
 import { CircleAlert } from "lucide-react";
 
+import { useToast } from "@/hooks/use-toast";
+import AlertDialogDemo from "@/components/AlertDialogDemo";
+import { Search } from "lucide-react";
 const ErrorComponent = ({ error }) => <div>Error: {error?.message || "An error occurred"}</div>;
 
 const Page = ({ params }) => {
   const router = useRouter();
+  const { toast } = useToast();
   const { data: session } = useSession();
   //if(session === null) return;
   // if(!session) {
@@ -51,11 +54,19 @@ const Page = ({ params }) => {
     filteredTasks: [],
     selectedTeam: params.teamId
   });
-  console.log("Helooooo000000000000000", teamData)
-  console.log("Page State:", pageState.task);
+
+    useEffect(() => {
+      const filtered = pageState.tasks.filter(task => 
+        task.title.toLowerCase().includes(pageState.searchQuery.toLowerCase()) ||
+        task.descrption.toLowerCase().includes(pageState.searchQuery.toLowerCase())
+      );
+      setPageState(prev => ({ ...prev, filteredTasks: filtered }));
+    }, [pageState.searchQuery, pageState.tasks]);
+
+    
+
   useEffect(() => {
     if (myTeamTask) {
-      console.log("Fetched Tasks:", myTeamTask);
       setPageState((prevState) => ({
         ...prevState,
         tasks: myTeamTask,
@@ -72,6 +83,9 @@ const Page = ({ params }) => {
   if (isLoading || teamLoading || !myTeamTask || !teamData) return <SkeletonDemo />;
   if (error || teamError) return <ErrorComponent error={error || teamError} />;
 
+    const handleSearch = (e) => {
+    setPageState(prev => ({ ...prev, searchQuery: e.target.value }));
+  };
   // Handlers
   const handleRoute = (teamTitle, taskId = 10) => {
     setPageState(prev => ({ ...prev, selectedTeam: teamTitle }));
@@ -93,19 +107,26 @@ const Page = ({ params }) => {
 
   const handleTeamDelete = async (teamName) => {
     try {
-      console.log("helo broda", teamName)
       await deleteTeamMutation.mutateAsync({
         userMail: session?.user?.email,
         teamName: teamName,
       });
       router.push('/mygroups');
+      toast({
+        title: "Team deleted successfully",
+        description: "Your team has been deleted successfully.",
+      });
     } catch (error) {
       console.error("Error deleting task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete team. Please try again.",
+        variant: "destructive",
+      });
     }
   }
 
   const handleStatusChange = async (newStatus) => {
-    console.log("Work man it aint funny")
     if (!pageState.task) return;
 
     try {
@@ -148,14 +169,23 @@ const Page = ({ params }) => {
         filteredTasks: updatedTasks,
         task: null
       }));
+      toast({
+        title: "Task Deleted",
+        description: "Task has been deleted successfully!",
+        variant: "dark",
+      });
 
       router.push(`/mygroups/${params.teamId}/task/0`);
     } catch (error) {
       console.error("Error deleting task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
-  console.log("taskssss name", params.taskId)
 
   return (
     <>
@@ -188,15 +218,23 @@ const Page = ({ params }) => {
       </div>
 
       {/* My Page */}
-      <div>
-      </div>
       <div className='h-auto w-auto bg-[#09090b] m-2 flex flex-col items-start gap-6 pt-[50px]'>
+        <div className="relative w-full mb-3 px-3">
+                    <Input
+                      type="text"
+                      placeholder="Search tasks..."
+                      value={pageState.searchQuery}
+                      onChange={handleSearch}
+                      className="w-full pl-10 pr-4 py-2 bg-[#18181b] text-white border-zinc-700 rounded-md"
+                    />
+                    <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-zinc-400" />
+                  </div>
         <div className="flex items-center gap-2 mx-3">
           {pageState?.filteredTasks?.length > 0 && (
             <Button
-              variant="outline"
+              variant="default"
               onClick={handleSort}
-              className="text-black flex items-center gap-2"
+              className="border border-zinc-400 flex items-center"
             >
               Sort by Priority
               {pageState.sortDirection === 'asc' ? (
@@ -231,7 +269,7 @@ const Page = ({ params }) => {
         <div className='h-[90.8vh] w-[35vw] rounded-md bg-[#09090b] top-[55px] left-[10px] sticky m-2 flex flex-col border border-zinc-800 overflow-hidden'>
           <div className="bg-zinc-900  p-4 flex items-end justify-center h-full">
             <div className=' flex justify-between items-center'>
-            <CreateTeam userMail={session?.user?.email} teamId={params.teamId} />
+              <CreateTeam userMail={session?.user?.email} teamId={params.teamId} />
             </div>
           </div>
         </div>
@@ -244,9 +282,12 @@ const Page = ({ params }) => {
                   <img className='w-10 h-10 rounded-full' src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${pageState.task.assigner_id}`} alt="" />
                   <h1 className='text-xl font-semibold text-white truncate'>{pageState.task.title}</h1>
                 </div>
-                <div className='flex space-x-2'>
-                  <Trash2 className="text-zinc-400 hover:text-red-500 cursor-pointer transition-colors" />
-                </div>
+                <AlertDialogDemo
+                  isSelected2={true}
+                  handleListDelete={handleDelete}
+                  dialogTitle="Delete this task?"
+                  dialogDescription="This action cannot be undone. This will permanently delete this task and all associated data."
+                />
               </div>
               <div className='flex-grow overflow-y-auto'>
                 <div className='p-6 space-y-6'>

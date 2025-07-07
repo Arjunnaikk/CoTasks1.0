@@ -2,7 +2,6 @@ import React from 'react';
 import AlertDialogDemo from '@/components/AlertDialogDemo';
 
 const TeamList = ({ teamName, handleClick, isSelected, handleTeamDelete}) => {
-  // console.log("Shit",teamName, handleClick, isSelected)
   return (
     <div 
       onClick={handleClick}
