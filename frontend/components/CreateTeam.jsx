@@ -17,6 +17,7 @@ import { Plus } from 'lucide-react'
 import SelectDemo from "./SelectDemo"
 import DatePickerDemo from "./DatePicker"
 import { useCreateMyTeamTaskMutation } from "@/services/mutations"
+import { useGetTeamMembersQuery } from "@/services/queries"
 import { useToast } from "@/hooks/use-toast"
 
 export function Create({ userMail, teamId }) {
@@ -34,6 +35,7 @@ export function Create({ userMail, teamId }) {
 
   const [open, setOpen] = useState(false)
   const mutation = useCreateMyTeamTaskMutation()
+  const { data: teamMembersData } = useGetTeamMembersQuery(teamId)
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -177,7 +179,7 @@ export function Create({ userMail, teamId }) {
                   onChange={handleDateChange}
                 />
               </div>
-              <div className="flex flex-col items-start gap-2">
+               <div className="flex flex-col items-start gap-2 w-full">
                 <Label htmlFor="assign_to" className="text-right">
                   Assign to People
                 </Label>
@@ -186,9 +188,44 @@ export function Create({ userMail, teamId }) {
                   id="assign_to"
                   name="assign_to"
                   value={form.assign_to.join(", ")}
-                  className="col-span-3 bg-black text-white"
+                  className="w-full bg-zinc-950 text-white border-zinc-800"
                   placeholder="Enter email addresses, separated by commas"
                 />
+                {teamMembersData?.members && teamMembersData.members.length > 0 && (
+                  <div className="mt-1.5 w-full">
+                    <p className="text-xs text-zinc-500 mb-2 font-medium">Group members (click to toggle):</p>
+                    <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                      {teamMembersData.members.map((member) => {
+                        const isAssigned = form.assign_to.includes(member.gmail);
+                        return (
+                          <button
+                            key={member.user_id}
+                            type="button"
+                            onClick={() => {
+                              const alreadyAssigned = form.assign_to.includes(member.gmail);
+                              const updated = alreadyAssigned
+                                ? form.assign_to.filter(email => email !== member.gmail)
+                                : [...form.assign_to, member.gmail];
+                              setForm(prev => ({ ...prev, assign_to: updated }));
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
+                              isAssigned
+                                ? "bg-white text-zinc-950 border-white font-medium"
+                                : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
+                            }`}
+                          >
+                            <img 
+                              className="w-3.5 h-3.5 rounded-full bg-zinc-800 object-cover" 
+                              src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${member.user_id}`} 
+                              alt="" 
+                            />
+                            <span>{member.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
               <SheetFooter>
                 <Button

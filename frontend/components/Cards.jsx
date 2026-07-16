@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowDown, ArrowRight, ArrowUp, CheckCheck } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUp, CheckCheck, Calendar } from 'lucide-react';
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from 'next/navigation';
 import { CircleAlert } from 'lucide-react';
@@ -8,50 +8,61 @@ import { CircleAlert } from 'lucide-react';
 const Card = ({ myTask, keye, listName }) => {
     const router = useRouter();
     
-    // Check if myTask and newTask are defined
     if (!myTask || !myTask.newTask || myTask.newTask.length <= keye) {
-        return null; // Return null or a fallback UI if data is not available
+        return null;
     }
 
-    const task = myTask.newTask[keye]; // Retrieve the task
-    // Define the status colors
+    const task = myTask.newTask[keye];
+
     const STATUS_COLORS = {
-        'missed': 'bg-[#ff2828]',
-        'ongoing': 'bg-[#ffd630]',
-        'completed': 'bg-[#53fa31]',
-        'default': 'bg-gray-500',
+        'missed': 'bg-rose-500',
+        'ongoing': 'bg-amber-500',
+        'completed': 'bg-emerald-500',
+        'default': 'bg-zinc-500',
     };
     
-    // Function to get the appropriate status color
     const getStatusColor = (status) => STATUS_COLORS[status] || STATUS_COLORS.default;
-    
 
     const handleClick = () => {
-        const taskId = task.task_id; // Retrieve the task_id
+        const taskId = task.task_id;
         router.push(`/mypage/${listName}/task/${taskId}`);
     };
+
     return (
-        <div onClick={handleClick} className='bg-#09090b border border-zinc-800 border-1 w-[35vw] h-[22vh] rounded-lg rounded-b-none flex flex-col relative hover:bg-zinc-800 transition-colors cursor-pointer'>
-            <div className='flex flex-row'>
-                <h1 className='text-2xl font-semibold text-white flex p-2 ml-7 items-center'>{task.title}</h1>
+        <div 
+            onClick={handleClick} 
+            className="group w-[35vw] min-h-[160px] bg-zinc-950/30 border border-zinc-900 hover:border-zinc-800 hover:bg-zinc-900/10 rounded-xl flex flex-col justify-between p-5 transition-all duration-300 cursor-pointer relative overflow-hidden"
+        >
+            <div className="flex justify-between items-start gap-4">
+                <div className="space-y-1 max-w-[80%]">
+                    <h2 className="text-lg font-bold text-white group-hover:text-zinc-200 transition-colors truncate tracking-tight">
+                        {task.title}
+                    </h2>
+                    <p className="text-xs text-zinc-400 font-normal leading-relaxed line-clamp-2">
+                        {task.descrption}
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 bg-zinc-900 border border-zinc-850 p-1.5 rounded-lg text-zinc-400">
+                    {task.priority === 0 && task.status === 'completed' && <CheckCheck className="h-4 w-4 text-emerald-500" />}
+                    {task.priority === 0 && task.status === 'missed' && <CircleAlert className="h-4 w-4 text-rose-500" />}
+                    {task.priority === 1 && <ArrowDown className="h-4 w-4 text-blue-400" />}
+                    {task.priority === 2 && <ArrowRight className="h-4 w-4 text-amber-500" />}
+                    {task.priority === 3 && <ArrowUp className="h-4 w-4 text-purple-400" />}
+                </div>
             </div>
-            <div className='text-sm font-inter font-poppins text-white flex pl-10 pr-1 py-1 overflow-hidden w-[70%] h-[auto]'>
-                <span>{task.descrption.length > 100 ? `${task.descrption.slice(0,100)}...`: task.descrption}</span>
+
+            <div className="flex justify-between items-center mt-4 pt-3 border-t border-zinc-900/50">
+                <div className="flex items-center gap-1 text-zinc-500 text-xs">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>{task.start_d ? task.start_d.split(' ')[0] : 'N/A'}</span>
+                </div>
             </div>
-            <div className='absolute right-10 top-4 w-auto flex flex-row gap-5 justify-center text-white'>
-            {task.priority === 0 && task.status =='completed' && <CheckCheck />}
-            {task.priority === 0 && task.status =='missed' && <CircleAlert />}
-                {task.priority === 1 && <ArrowDown />}
-                {task.priority === 2 && <ArrowRight />}
-                {task.priority === 3 && <ArrowUp />}
+
+            {/* Subtle bottom indicator badge */}
+            <div className="absolute bottom-0 left-0 w-full h-[3px]">
+                <div className={`w-full h-full ${getStatusColor(task.status)} opacity-80`} />
             </div>
-            <div className='absolute right-7 bottom-3 text-white font-thin text-xs'>
-                {task.start_d.split(' ')[0]}
-            </div>
-            <div className='absolute bottom-[-3px] w-full'> 
-            <Badge className={`${getStatusColor(task.status)} flex justify-center h-[2px]`}>
-              </Badge>
-              </div>
         </div>
     );
 }

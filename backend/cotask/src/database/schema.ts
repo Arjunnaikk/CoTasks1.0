@@ -28,7 +28,7 @@ export const task = sqliteTable("task", {
   priority: integer("priority").default(0),
   assigner_id: integer("assigner_id").references(() => user.user_id, { onDelete : 'cascade' }),
   list_id : integer("list_id").references(() => list.list_id, { onDelete : 'cascade' }),
-  
+  team_id : integer("team_id").references(() => team.team_id, { onDelete : 'cascade' }),
 });
 
 export const task_assigned = sqliteTable("task_assigned", {

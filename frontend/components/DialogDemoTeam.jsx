@@ -21,7 +21,7 @@ export function DialogDemo({ email, username}) {
   const { toast } = useToast()
   const [form, setForm] = useState({
     title: '',
-    user_array: [username,""]
+    user_array: [email || ""]
   })
   const [open, setOpen] = useState(false)
   const router = useRouter()

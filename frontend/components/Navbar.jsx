@@ -1,78 +1,105 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSession, signIn, signOut } from "next-auth/react"
 import Link from 'next/link'
-import { useEffect } from 'react'
-import { Menu } from 'lucide-react'
+import { LogOut, Settings, User, LayoutDashboard } from 'lucide-react'
 import { useGetUserQuery } from '@/services/queries'
 
 const Navbar = () => {
   const { data: session } = useSession()
   const [showDropdown, setShowDropdown] = useState(false)
-  const { data: userData, isLoading, error } = useGetUserQuery()
-    const user = userData?.user?.find((user) =>
-      user.name === session?.user?.name
-  );
+  const { data: userData } = useGetUserQuery()
+  
+  const user = userData?.user?.find((user) => user.name === session?.user?.name)
 
   useEffect(() => {
     const handleScroll = () => {
       const navbar = document.querySelector('nav')
-      if (window.scrollY > 50) {
-        navbar.classList.add('scrolled')
-      } else {
-        navbar.classList.remove('scrolled')
+      if (navbar) {
+        if (window.scrollY > 10) {
+          navbar.classList.add('navbar-scrolled')
+        } else {
+          navbar.classList.remove('navbar-scrolled')
+        }
       }
     }
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-  console.log(session?.user?.name)
+
   return (
-    <>
-      <nav className='navbar bg-gradient-to-r from-bg-#09090b text-white flex justify-between px-5 h-12 sticky top-0 z-10 items-center'>
-        <Link href="/" >
-          <div className="logo font-bold text-lg flex justify-center items-center z-50">
-            CoTask
-          </div>
-        </Link>
-        <div className='relative'>
-          {session && <>
-          <div className='text-white hover:opacity-80 rounded-full font-medium rounded-full p-2'>
-              <img className='w-full ' 
+    <nav className='sticky top-0 z-50 w-full h-14 bg-zinc-950/60 border-b border-zinc-900 backdrop-blur-md transition-all duration-300 px-6 flex justify-between items-center text-white'>
+      <Link href="/" className="flex items-center gap-2 group">
+        <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center font-black text-black group-hover:scale-105 transition-transform duration-200">
+          C
+        </div>
+        <span className="logo font-bold text-lg tracking-tight group-hover:text-zinc-300 transition-colors">
+          CoTask
+        </span>
+      </Link>
+
+      <div className='flex items-center gap-4 relative'>
+        {session ? (
+          <>
+            <Link href="/mygroups/" className="hidden md:flex items-center gap-1.5 text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+              <LayoutDashboard className="h-4 w-4" />
+              Dashboard
+            </Link>
+
+            <button 
               onClick={() => { setShowDropdown(!showDropdown) }}
               onBlur={() => {
-                setTimeout(() => { setShowDropdown(false) }, 500)
+                setTimeout(() => { setShowDropdown(false) }, 200)
               }}
-              id="dropdownDividerButton"
-              src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${user?.user_id}`} alt="" />
-            </div>
-            <div id="dropdownDivider" className={`z-10 ${showDropdown ? "" : "hidden"} absolute top-[45px] right-[0px] bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600`}>
-              <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDividerButton">
-                <li>
-                  <Link href="/mysettings" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{session?.user?.name}</Link>
-                </li>
-              </ul>
-              <div className="py-2">
-                <Link onClick={() => signOut()} href={"/"} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-auto dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white" >Log Out</Link>
-              </div>
-            </div>
-          </>}
-        </div>
-        {!session &&
-          // <Link href={"/login"}>
+              className="flex items-center gap-2 focus:outline-none focus:ring-1 focus:ring-zinc-800 rounded-full p-0.5 hover:bg-zinc-900 transition-colors"
+            >
+              <img 
+                className='w-8 h-8 rounded-full border border-zinc-800 object-cover ring-1 ring-zinc-700/30'
+                src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${user?.user_id || 'default'}`} 
+                alt="Profile" 
+              />
+            </button>
 
-          <button onClick={() => signIn()} type="button" className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2 text-center flex justify-center items-center">Login</button>
-          // {/* </Link> */}
-        }
-      </nav>
-    </>
+            {showDropdown && (
+              <div className="absolute top-[45px] right-[0px] w-52 bg-zinc-950 border border-zinc-900 rounded-xl shadow-2xl overflow-hidden py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-4 py-2 border-b border-zinc-900">
+                  <p className="text-xs text-zinc-500 font-medium">Logged in as</p>
+                  <p className="text-sm text-zinc-200 font-semibold truncate">{session?.user?.name}</p>
+                  <p className="text-xs text-zinc-500 truncate">{session?.user?.email}</p>
+                </div>
+                <ul className="py-1">
+                  <li>
+                    <Link href="/mysettings" className="flex items-center gap-2 px-4 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors">
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Link>
+                  </li>
+                </ul>
+                <div className="border-t border-zinc-900 pt-1">
+                  <button 
+                    onClick={() => signOut()} 
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-zinc-900 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <button 
+            onClick={() => signIn()} 
+            type="button" 
+            className="h-9 px-4 text-xs font-semibold rounded-lg bg-white text-black hover:bg-zinc-200 active:scale-95 transition-all duration-200"
+          >
+            Login
+          </button>
+        )}
+      </div>
+    </nav>
   )
 }
 
 export default Navbar
-
-
-
-
-

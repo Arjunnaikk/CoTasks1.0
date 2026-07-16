@@ -8,6 +8,13 @@
       "when": 1728984277397,
       "tag": "0000_regular_big_bertha",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1784192644107,
+      "tag": "0001_modern_lady_ursula",
+      "breakpoints": true
     }
   ]
 }

@@ -1,41 +1,70 @@
 'use client'
 
 import React from 'react';
-import { MessageCircleMore, Settings, User, Users } from 'lucide-react';
+import { Settings, User, Users } from 'lucide-react';
 import Link from 'next/link';
-import { useGetListQuery, useGetMyTaskQuery } from "@/services/queries"; // Ensure you import your task query
-import { useSession } from "next-auth/react";
+import { usePathname } from 'next/navigation';
 
 const Sidebar = () => {
-  const { data: session } = useSession();
+  const pathname = usePathname();
+
+  if (pathname === '/') {
+    return null;
+  }
+
+  const isActive = (path) => {
+    if (path === '/mypage') {
+      return pathname.startsWith('/mypage');
+    }
+    if (path === '/mygroups') {
+      return pathname.startsWith('/mygroups');
+    }
+    if (path === '/mysettings') {
+      return pathname.startsWith('/mysettings');
+    }
+    return false;
+  };
+
+  const navItems = [
+    {
+      href: '/mypage',
+      icon: User,
+      label: 'Personal Tasks',
+    },
+    {
+      href: '/mygroups',
+      icon: Users,
+      label: 'Collaborative Groups',
+    },
+    {
+      href: '/mysettings',
+      icon: Settings,
+      label: 'Settings',
+    },
+  ];
 
   return (
-    <div className='flex flex-row'>
-      <div className='w-[4vw] h-[90.8vh] bg-#09090b top-[55px] sticky rounded-md m-1 border border-zinc-800 border-1'>
-        <div className='flex justify-center items-center align-middle flex-col gap-7 mt-4 text-white'>
-
-          {/* Link to the first task of the first list */}
-          {(
-            <Link href={`/mypage/`}>
-              <User /> {/* Change icon as needed */}
+    <div className='flex flex-row z-45'>
+      <div className='w-16 h-[calc(100vh-4rem)] bg-zinc-950/40 border-r border-zinc-900 sticky top-14 flex flex-col items-center py-6 gap-6 transition-all duration-300'>
+        {navItems.map((item, index) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          
+          return (
+            <Link 
+              key={index}
+              href={item.href}
+              title={item.label}
+              className={`p-3 rounded-xl transition-all duration-200 group ${
+                active 
+                  ? 'bg-white text-black font-semibold shadow-lg shadow-white/5' 
+                  : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/50'
+              }`}
+            >
+              <Icon className="h-5 w-5 group-hover:scale-105 transition-transform" />
             </Link>
-          )}
-
-          {/* Link to the users page */}
-          <Link href={`/mygroups/`}>
-            <Users />
-          </Link>
-
-          {/* Link to the messages page */}
-          {/* <Link href="/mychats">
-            <MessageCircleMore />
-          </Link> */}
-
-          {/* Link to the settings page */}
-          <Link href="/mysettings">
-            <Settings />
-          </Link>
-        </div>
+          );
+        })}
       </div>
     </div>
   );

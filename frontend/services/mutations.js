@@ -1,15 +1,17 @@
 import axios from "axios";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://cotask.somprajapati24-dcf.workers.dev";
 
 //Create User
 export function useCreateUserMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["createUser"],
     mutationFn: async ({ name, gmail, imgText}) => {
-      // console.log('imgText',imgText)
       try {
         const response = await axios.post(
-          "https://cotask.somprajapati24-dcf.workers.dev/user/create",
+          `${API_BASE_URL}/user/create`,
           JSON.stringify({
             name,
             gmail,
@@ -24,26 +26,27 @@ export function useCreateUserMutation() {
         return response.data;
       } catch (error) {
         console.error("API call error:", error);
-        throw error; // Allows onError to catch this error in the calling component
+        throw error;
       }
     },
-    retry: false, // Keeps retry disabled for specific control
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getUser"] });
+    },
+    retry: false,
   });
 }
 
 
 //Create List
 export function useCreateListMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["createList"],
-    mutationFn: async ({ title,email }) => {
-      // Log the request data
-      // console.log("Sending data:", JSON.stringify({ name: title })); // Changed title to name
-      
+    mutationFn: async ({ title, email }) => {
       return (
         await axios.post(
-          "https://cotask.somprajapati24-dcf.workers.dev/list/create",
-          JSON.stringify({ name: title, user_gmail:email }), // Send as stringified JSON with 'name' key
+          `${API_BASE_URL}/list/create`,
+          JSON.stringify({ name: title, user_gmail:email }),
           {
             headers: { 
               "Content-Type": "application/json",
@@ -51,6 +54,9 @@ export function useCreateListMutation() {
           }
         )
       ).data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getList", variables.email] });
     },
     retry: false,
   });
@@ -60,16 +66,14 @@ export function useCreateListMutation() {
 
 //Create Team
 export function useCreateTeamMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["createTeam"],
     mutationFn: async ({ title, names }) => {
-      // Log the correct request data
-      // console.log("Sending data:", JSON.stringify({ title: title, user_array: names }));
-
       return (
         await axios.post(
-          "https://cotask.somprajapati24-dcf.workers.dev/team/create",
-          JSON.stringify({ title: title, user_array: names }), // Send as stringified JSON with 'title' and 'user_array' keys
+          `${API_BASE_URL}/team/create`,
+          JSON.stringify({ title: title, user_array: names }),
           {
             headers: { 
               "Content-Type": "application/json",
@@ -78,6 +82,9 @@ export function useCreateTeamMutation() {
         )
       ).data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getTeam"] });
+    },
     retry: false,
   });
 }
@@ -85,18 +92,13 @@ export function useCreateTeamMutation() {
 
 //Update Team Task
 export function useUpdateTaskStatusMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["updateTask"],
     mutationFn: async ({ user_gmail, task_name, status }) => {
-      // console.log("Sending data:", JSON.stringify({ 
-      //   user_gmail, 
-      //   task_name, 
-      //   status 
-      // }));
-
       return (
         await axios.patch(
-          "https://cotask.somprajapati24-dcf.workers.dev/myTask/update",
+          `${API_BASE_URL}/myTask/update`,
           JSON.stringify({ 
             user_gmail,
             task_name,
@@ -110,6 +112,10 @@ export function useUpdateTaskStatusMutation() {
         )
       ).data;
     },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTask"] });
+      queryClient.invalidateQueries({ queryKey: ["getMyTask"] });
+    },
     retry: false,
   });
 }
@@ -119,16 +125,13 @@ export function useUpdateTaskStatusMutation() {
 
 //Create Task
 export function useCreateMyTaskMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["createTask"],
     mutationFn: async ({ title, description, priority, end_d, taskStatus, userMail, listName }) => {
-      // console.log("Sending task data:", { title, description, priority, end_d, taskStatus, userMail, listName });
-    //   console.log(typeof formattedEndD); // Outputs: 'object'
-    // console.log(formattedEndD instanceof Date); // Outputs: true
-
       try {
         const response = await axios.post(
-          "https://cotask.somprajapati24-dcf.workers.dev/myTask/create",
+          `${API_BASE_URL}/myTask/create`,
           JSON.stringify({
             title,
             description,
@@ -147,22 +150,26 @@ export function useCreateMyTaskMutation() {
         return response.data;
       } catch (error) {
         console.error("API call error:", error);
-        throw error; // Allows onError to catch this error in the calling component
+        throw error;
       }
     },
-    retry: false, // Keeps retry disabled for specific control
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTask", variables.userMail, variables.listName] });
+    },
+    retry: false,
   });
 }
 
 
 //Create My Team Task
 export function useCreateMyTeamTaskMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["createTeamTask"],
     mutationFn: async ({ title, description, priority, end_d, taskStatus, userMail, teamName , userArray }) => {
       try {
         const response = await axios.post(
-          "https://cotask.somprajapati24-dcf.workers.dev/teamTask/create",
+          `${API_BASE_URL}/teamTask/create`,
           JSON.stringify({
             title,
             description,
@@ -182,107 +189,110 @@ export function useCreateMyTeamTaskMutation() {
         return response.data;
       } catch (error) {
         console.error("API call error:", error);
-        throw error; // Allows onError to catch this error in the calling component
+        throw error;
       }
     },
-    retry: false, // Keeps retry disabled for specific control
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getMyTask", variables.userMail, variables.teamName] });
+    },
+    retry: false,
   });
 }
 
 
 //Delete MyTask
 export function useDeleteMyTaskMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["deleteTask"],
     mutationFn: async ({ userMail, taskId }) => {
-      // console.log("Deleting task data:");
-    //   console.log(typeof formattedEndD); // Outputs: 'object'
-    // console.log(formattedEndD instanceof Date); // Outputs: true
-
     try {
-    const response = await axios.delete(
-      "https://cotask.somprajapati24-dcf.workers.dev/myTask/delete",
-      {
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        data: JSON.stringify({
-          user_gmail: userMail,
-          task_id: taskId
-        }),
-      }
-    );
-    return response.data;
-  } catch (error) {
+      const response = await axios.delete(
+        `${API_BASE_URL}/myTask/delete`,
+        {
+          headers: { 
+            "Content-Type": "application/json",
+          },
+          data: JSON.stringify({
+            user_gmail: userMail,
+            task_id: taskId
+          }),
+        }
+      );
+      return response.data;
+    } catch (error) {
         console.error("API call error:", error);
-        throw error; // Allows onError to catch this error in the calling component
+        throw error;
       }
     },
-    retry: false, // Keeps retry disabled for specific control
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTask"] });
+    },
+    retry: false,
   });
 }
 
 //Delete List
 export function useDeleteListMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["deleteList"],
     mutationFn: async ({ userMail, name }) => {
-      // console.log("Deleting task data:");
-    //   console.log(typeof formattedEndD); // Outputs: 'object'
-    // console.log(formattedEndD instanceof Date); // Outputs: true
-
     try {
-    const response = await axios.delete(
-      "https://cotask.somprajapati24-dcf.workers.dev/list/delete",
-      {
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        data: JSON.stringify({
-          user_gmail: userMail,
-          name: name
-        }),
-      }
-    );
-    return response.data;
-  } catch (error) {
+      const response = await axios.delete(
+        `${API_BASE_URL}/list/delete`,
+        {
+          headers: { 
+            "Content-Type": "application/json",
+          },
+          data: JSON.stringify({
+            user_gmail: userMail,
+            name: name
+          }),
+        }
+      );
+      return response.data;
+    } catch (error) {
         console.error("API call error:", error);
-        throw error; // Allows onError to catch this error in the calling component
+        throw error;
       }
     },
-    retry: false, // Keeps retry disabled for specific control
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getList", variables.userMail] });
+    },
+    retry: false,
   });
 }
 
 //Delete Team
 export function useDeleteTeamMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["deleteTeam"],
     mutationFn: async ({ userMail, teamName }) => {
-    //   console.log("Deleting task data:");
-    //   console.log(typeof formattedEndD); // Outputs: 'object'
-    // console.log(formattedEndD instanceof Date); // Outputs: true
-
     try {
-    const response = await axios.delete(
-      "https://cotask.somprajapati24-dcf.workers.dev/team/delete",
-      {
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        data: JSON.stringify({
-          user_gmail: userMail,
-          team_name: teamName
-        }),
-      }
-    );
-    return response.data;
-  } catch (error) {
+      const response = await axios.delete(
+        `${API_BASE_URL}/team/delete`,
+        {
+          headers: { 
+            "Content-Type": "application/json",
+          },
+          data: JSON.stringify({
+            user_gmail: userMail,
+            team_name: teamName
+          }),
+        }
+      );
+      return response.data;
+    } catch (error) {
         console.error("API call error:", error);
-        throw error; // Allows onError to catch this error in the calling component
+        throw error;
       }
     },
-    retry: false, // Keeps retry disabled for specific control
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTeam", variables.userMail] });
+    },
+    retry: false,
   });
 }
 
@@ -290,32 +300,33 @@ export function useDeleteTeamMutation() {
 
 //Delete Team Task
 export function useDeleteTeamTaskMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["deleteTeamTask"],
     mutationFn: async ({ teamName, taskId }) => {
-      // console.log("Deleting task data:");
-    //   console.log(typeof formattedEndD); // Outputs: 'object'
-    // console.log(formattedEndD instanceof Date); // Outputs: true
-
     try {
-    const response = await axios.delete(
-      "https://cotask.somprajapati24-dcf.workers.dev/teamTask/delete",
-      {
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        data: JSON.stringify({
-          task_id: taskId,
-          team_name: teamName
-        }),
-      }
-    );
-    return response.data;
-  } catch (error) {
+      const response = await axios.delete(
+        `${API_BASE_URL}/teamTask/delete`,
+        {
+          headers: { 
+            "Content-Type": "application/json",
+          },
+          data: JSON.stringify({
+            task_id: taskId,
+            team_name: teamName
+          }),
+        }
+      );
+      return response.data;
+    } catch (error) {
         console.error("API call error:", error);
-        throw error; // Allows onError to catch this error in the calling component
+        throw error;
       }
     },
-    retry: false, // Keeps retry disabled for specific control
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getMyTask"] });
+      queryClient.invalidateQueries({ queryKey: ["getAssigned"] });
+    },
+    retry: false,
   });
 }

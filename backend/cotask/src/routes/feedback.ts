@@ -34,7 +34,7 @@ app.get('/', (c) => c.json({ msg: 'server up and running' }));
 
 	app.post('/feedback',createFeedbackValidator, async (c) => {
 		const db = database(c.env.DB);
-		const data = c.req.valid('json');
+		const data = await c.req.json();
 
 		try {
 

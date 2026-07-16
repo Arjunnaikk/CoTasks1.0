@@ -1,0 +1,1 @@
+ALTER TABLE `task` ADD `team_id` integer REFERENCES team(team_id);

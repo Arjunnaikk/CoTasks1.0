@@ -8,5 +8,5 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB" # i.e. available in your Worker on env.DB
 database_name = "dbtest2"
-database_id = "14846254-2f36-490f-9c5c-191a944267d3"
+database_id = "fbde9324-899a-4bfc-acd1-faf70b7e8cb4"
 migrations_dir = "src/database/drizzle"

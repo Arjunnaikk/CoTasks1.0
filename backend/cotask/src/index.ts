@@ -15,13 +15,22 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import user from './routes/user';
 import feedback from './routes/feedback';
-
+import list from './routes/list';
+import task from './routes/task';
+import team from './routes/team';
+import teamTask from './routes/teamTask';
+import taskAssigned from './routes/task_assigned';
 
 const app = new Hono();
 
 app.use('*', cors());
 app.route('/', user);
 app.route('/', feedback);
+app.route('/', list);
+app.route('/', task);
+app.route('/', team);
+app.route('/', teamTask);
+app.route('/', taskAssigned);
 
 app.notFound((c) => c.json({ msg: 'not found' }, 404));
 

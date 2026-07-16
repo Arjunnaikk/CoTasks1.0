@@ -295,18 +295,43 @@ const Page = ({ params }) => {
                     <h2 className='text-lg font-semibold text-zinc-300 mb-2 '>Description</h2>
                     <p className='text-zinc-400'>{pageState.task.descrption}</p>
                   </div>
-                  <div>
+                   <div>
                     <h2 className='text-lg font-semibold text-zinc-300 mb-2'>Status</h2>
-                    <Select onValueChange={handleStatusChange} defaultValue={pageState.task.status}>
-                      <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white">
-                        <SelectValue placeholder="Select a status" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 text-white">
-                        <SelectItem value="ongoing">Ongoing</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="missed">Missed</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="grid grid-cols-3 bg-zinc-950 border border-zinc-900 p-1.5 rounded-xl w-full gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleStatusChange("ongoing")}
+                        className={`py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                          pageState.task.status === "ongoing"
+                            ? "bg-amber-500 text-zinc-950 font-bold shadow-md shadow-amber-500/10"
+                            : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30"
+                        }`}
+                      >
+                        Ongoing
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleStatusChange("completed")}
+                        className={`py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                          pageState.task.status === "completed"
+                            ? "bg-emerald-500 text-zinc-950 font-bold shadow-md shadow-emerald-500/10"
+                            : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30"
+                        }`}
+                      >
+                        Completed
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleStatusChange("missed")}
+                        className={`py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                          pageState.task.status === "missed"
+                            ? "bg-rose-500 text-zinc-950 font-bold shadow-md shadow-rose-500/10"
+                            : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30"
+                        }`}
+                      >
+                        Missed
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <h2 className='text-lg font-semibold text-zinc-300 mb-2'>Priority</h2>

@@ -1,0 +1,439 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "ebf582b3-19aa-4148-8a4d-d4b3e876290b",
+  "prevId": "92d1f8ac-06d6-496b-be8e-b6ff9f22de71",
+  "tables": {
+    "feedback": {
+      "name": "feedback",
+      "columns": {
+        "feedback_id": {
+          "name": "feedback_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "rating": {
+          "name": "rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "comment": {
+          "name": "comment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "feedback_user_id_user_user_id_fk": {
+          "name": "feedback_user_id_user_user_id_fk",
+          "tableFrom": "feedback",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "list": {
+      "name": "list",
+      "columns": {
+        "list_id": {
+          "name": "list_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "list_user_id_user_user_id_fk": {
+          "name": "list_user_id_user_user_id_fk",
+          "tableFrom": "list",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "task": {
+      "name": "task",
+      "columns": {
+        "task_id": {
+          "name": "task_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'ongoing'"
+        },
+        "start_d": {
+          "name": "start_d",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(CURRENT_TIMESTAMP)"
+        },
+        "end_d": {
+          "name": "end_d",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "priority": {
+          "name": "priority",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "assigner_id": {
+          "name": "assigner_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "list_id": {
+          "name": "list_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "task_assigner_id_user_user_id_fk": {
+          "name": "task_assigner_id_user_user_id_fk",
+          "tableFrom": "task",
+          "tableTo": "user",
+          "columnsFrom": [
+            "assigner_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "task_list_id_list_list_id_fk": {
+          "name": "task_list_id_list_list_id_fk",
+          "tableFrom": "task",
+          "tableTo": "list",
+          "columnsFrom": [
+            "list_id"
+          ],
+          "columnsTo": [
+            "list_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "task_team_id_team_team_id_fk": {
+          "name": "task_team_id_team_team_id_fk",
+          "tableFrom": "task",
+          "tableTo": "team",
+          "columnsFrom": [
+            "team_id"
+          ],
+          "columnsTo": [
+            "team_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "task_assigned": {
+      "name": "task_assigned",
+      "columns": {
+        "assigned_id": {
+          "name": "assigned_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "task_id": {
+          "name": "task_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "task_assigned_user_id_user_user_id_fk": {
+          "name": "task_assigned_user_id_user_user_id_fk",
+          "tableFrom": "task_assigned",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "task_assigned_task_id_task_task_id_fk": {
+          "name": "task_assigned_task_id_task_task_id_fk",
+          "tableFrom": "task_assigned",
+          "tableTo": "task",
+          "columnsFrom": [
+            "task_id"
+          ],
+          "columnsTo": [
+            "task_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "team": {
+      "name": "team",
+      "columns": {
+        "team_id": {
+          "name": "team_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "create_d": {
+          "name": "create_d",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "user": {
+      "name": "user",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "gmail": {
+          "name": "gmail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "user_gmail_unique": {
+          "name": "user_gmail_unique",
+          "columns": [
+            "gmail"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "user_team": {
+      "name": "user_team",
+      "columns": {
+        "team_id": {
+          "name": "team_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_team_team_id_team_team_id_fk": {
+          "name": "user_team_team_id_team_team_id_fk",
+          "tableFrom": "user_team",
+          "tableTo": "team",
+          "columnsFrom": [
+            "team_id"
+          ],
+          "columnsTo": [
+            "team_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "user_team_user_id_user_user_id_fk": {
+          "name": "user_team_user_id_user_user_id_fk",
+          "tableFrom": "user_team",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_team_team_id_user_id_pk": {
+          "columns": [
+            "team_id",
+            "user_id"
+          ],
+          "name": "user_team_team_id_user_id_pk"
+        }
+      },
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

@@ -1,13 +1,15 @@
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://cotask.somprajapati24-dcf.workers.dev";
+
 //myTask
 export function useGetMyTaskQuery(userGmail, listName) {
   return useQuery({
     queryKey: ["getTask", userGmail, listName],
     queryFn: async () => {
       const response = await axios.post(
-        "https://cotask.somprajapati24-dcf.workers.dev/myTask/fetch",
+        `${API_BASE_URL}/myTask/fetch`,
         {
           user_gmail: userGmail,
           list_name: listName
@@ -24,7 +26,7 @@ export function useGetMyTeamTaskQuery(userGmail, TeamName) {
     queryKey: ["getMyTask", userGmail, TeamName],
     queryFn: async () => {
       const response = await axios.post(
-        "https://cotask.somprajapati24-dcf.workers.dev/teamTask/fetch",
+        `${API_BASE_URL}/teamTask/fetch`,
         {
           user_gmail: userGmail,
           team_name: TeamName
@@ -43,7 +45,7 @@ export function useGetUserQuery() {
     queryFn: async () => {
       try {
         const response = await axios.get(
-          "https://cotask.somprajapati24-dcf.workers.dev/user/fetch"
+          `${API_BASE_URL}/user/fetch`
         );
         return response.data;
       } catch (error) {
@@ -61,7 +63,7 @@ export function useGetListQuery(userMail){
     queryFn: async () =>{
       try{
         const response = await axios.post(
-          "https://cotask.somprajapati24-dcf.workers.dev/list/fetch",
+          `${API_BASE_URL}/list/fetch`,
           {
             user_gmail:userMail
           }
@@ -83,7 +85,7 @@ export function useGetMyTeamQuery(userGmail) {
     queryKey: ["getTeam", userGmail],
     queryFn: async () => {
       const response = await axios.post(
-        "https://cotask.somprajapati24-dcf.workers.dev/team/fetch",
+        `${API_BASE_URL}/team/fetch`,
         {
           user_gmail: userGmail
         }
@@ -100,7 +102,7 @@ export function useGetAssignedQuery(team_name, task_id) {
     queryKey: ["getAssigned", team_name, task_id],
     queryFn: async () => {
       const response = await axios.post(
-        "https://cotask.somprajapati24-dcf.workers.dev/taskAssigned/fetch",
+        `${API_BASE_URL}/taskAssigned/fetch`,
         {
           team_name,
           task_id: parseInt(task_id, 10)
@@ -108,5 +110,22 @@ export function useGetAssignedQuery(team_name, task_id) {
       );
       return response.data;  // Only return the data part
     },
+  });
+}
+
+//Get team members
+export function useGetTeamMembersQuery(teamName) {
+  return useQuery({
+    queryKey: ["getTeamMembers", teamName],
+    queryFn: async () => {
+      const response = await axios.post(
+        `${API_BASE_URL}/team/members`,
+        {
+          team_name: teamName
+        }
+      );
+      return response.data;
+    },
+    enabled: !!teamName
   });
 }
