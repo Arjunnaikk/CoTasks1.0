@@ -8,9 +8,7 @@ import { usePathname } from 'next/navigation';
 const Sidebar = () => {
   const pathname = usePathname();
 
-  if (pathname === '/') {
-    return null;
-  }
+
 
   const isActive = (path) => {
     if (path === '/mypage') {

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import database from '../database';
 import { eq, and } from 'drizzle-orm';
-import { user, team, task, task_assigned } from '../database/schema';
+import { user, team, task, task_assigned, activity_log } from '../database/schema';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 
@@ -85,6 +85,15 @@ app.post('/teamTask/create', createTeamTaskValidator, async (c) => {
 			assigner_id: assigner.user_id,
 			team_id: reqTeam.team_id,
 		}).returning();
+
+		const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+		await db.insert(activity_log).values({
+			team_id: reqTeam.team_id,
+			user_id: assigner.user_id,
+			action: "task_created",
+			description: `created task "${title}"`,
+			created_at: timestamp,
+		});
 
 		// Add assignments for assigned users
 		for (const email of user_array) {

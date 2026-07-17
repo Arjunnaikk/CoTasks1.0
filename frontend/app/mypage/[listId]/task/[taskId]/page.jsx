@@ -48,7 +48,8 @@ const Page = ({ params }) => {
     tasks: [],
     searchQuery: '',
     filteredTasks: [],
-    selectedList: params.listId
+    selectedList: params.listId,
+    priorityFilter: 'all'
   });
 
   useEffect(() => {
@@ -83,6 +84,23 @@ const Page = ({ params }) => {
     }
   }, [myTask]);
 
+  // Alert for personal tasks due soon
+  useEffect(() => {
+    if (!myTask?.newTask || myTask.newTask.length === 0) return;
+    const soonTasks = myTask.newTask.filter(t => {
+      if (t.status === 'completed' || !t.end_d) return false;
+      const diff = new Date(t.end_d).getTime() - new Date().getTime();
+      return diff > 0 && diff < 24 * 60 * 60 * 1000;
+    });
+    if (soonTasks.length > 0) {
+      toast({
+        title: "⚠️ Tasks Due Soon!",
+        description: `You have ${soonTasks.length} personal task(s) ending within 24 hours.`,
+        variant: "destructive",
+      });
+    }
+  }, [myTask, toast]);
+
   useEffect(() => {
     if (myTask?.newTask) {
       const currentTask = myTask.newTask.find(
@@ -93,12 +111,14 @@ const Page = ({ params }) => {
   }, [myTask, params.taskId]);
 
   useEffect(() => {
-    const filtered = pageState.tasks.filter(task => 
-      task.title.toLowerCase().includes(pageState.searchQuery.toLowerCase()) ||
-      task.descrption.toLowerCase().includes(pageState.searchQuery.toLowerCase())
-    );
+    const filtered = pageState.tasks.filter(task => {
+      const matchesSearch = task.title.toLowerCase().includes(pageState.searchQuery.toLowerCase()) ||
+        task.descrption.toLowerCase().includes(pageState.searchQuery.toLowerCase());
+      const matchesPriority = pageState.priorityFilter === 'all' || task.priority === parseInt(pageState.priorityFilter, 10);
+      return matchesSearch && matchesPriority;
+    });
     setPageState(prev => ({ ...prev, filteredTasks: filtered }));
-  }, [pageState.searchQuery, pageState.tasks]);
+  }, [pageState.searchQuery, pageState.priorityFilter, pageState.tasks]);
 
   
   const handleRoute = (name, taskId) => {
@@ -247,31 +267,49 @@ const Page = ({ params }) => {
 
       {/* My Page */}
       <div className='h-auto w-auto bg-[#09090b] m-2 flex flex-col items-start gap-6 pt-[50px]'>
-        <div className="w-full mb-3 px-3">
-          <div className="relative">
+        <div className="w-full mb-3 px-3 flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-grow w-full">
             <Input
               type="text"
               placeholder="Search tasks..."
               value={pageState.searchQuery}
               onChange={handleSearch}
-              className="w-full pl-10 pr-4 py-2 bg-[#18181b] text-white border-zinc-700 rounded-md"
+              className="w-full pl-10 pr-4 py-2 bg-[#18181b] text-white border-zinc-750 rounded-md focus:border-purple-500/50"
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-4 w-4" />
           </div>
-        </div>
-        
-        <div className="flex items-center gap-1 mx-3">
-          <Button 
-            onClick={handleSort} 
-            className="border-zinc-200 text-white flex items-center gap-2"
-          >
-            Sort by Priority 
-            {pageState.sortDirection === 'asc' ? (
-              <ArrowUp className="h-4 w-4" />
-            ) : (
-              <ArrowDown className="h-4 w-4" />
-            )}
-          </Button>
+
+          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+            {/* Priority Filter Select */}
+            <Select
+              value={pageState.priorityFilter}
+              onValueChange={(val) => setPageState(prev => ({ ...prev, priorityFilter: val }))}
+            >
+              <SelectTrigger className="w-[130px] bg-[#18181b] border-zinc-750 text-zinc-300">
+                <SelectValue placeholder="All Priorities" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="1">Low Priority</SelectItem>
+                <SelectItem value="2">Mid Priority</SelectItem>
+                <SelectItem value="3">High Priority</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Sort Button */}
+            <Button
+              variant="default"
+              onClick={handleSort}
+              className="bg-[#18181b] border border-zinc-750 text-white hover:bg-zinc-800 flex items-center gap-2 h-9 px-3 shrink-0"
+            >
+              Sort
+              {pageState.sortDirection === 'asc' ? (
+                <ArrowUp className="h-3.5 w-3.5" />
+              ) : (
+                <ArrowDown className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </div>
         </div>
 
         <div className='h-auto w-auto bg-[#09090b] m-2 flex flex-col items-start gap-3'>

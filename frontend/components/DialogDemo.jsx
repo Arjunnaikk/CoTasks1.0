@@ -51,10 +51,10 @@ export function DialogDemo({ email }) {
             },
             onError: (error) => {
               console.error("Mutation error:", error)
-              alert("Failed to create list: " + error.message)
+              const errMsg = error.response?.data?.msg || error.response?.data?.message || error.message;
               toast({
                 title: "Error",
-                description: "Failed to create list. Please try again.",
+                description: "Failed to create list: " + errMsg,
                 variant: "destructive",
               })
             },
@@ -62,7 +62,11 @@ export function DialogDemo({ email }) {
         )
       } catch (error) {
         console.error("Submit error:", error)
-        alert("Error creating list: " + error.message)
+        toast({
+          title: "Error",
+          description: "Error creating list: " + error.message,
+          variant: "destructive",
+        })
       }
     }
 

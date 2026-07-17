@@ -330,3 +330,356 @@ export function useDeleteTeamTaskMutation() {
     retry: false,
   });
 }
+
+//Send Team Message
+export function useSendTeamMessageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["sendTeamMessage"],
+    mutationFn: async ({ teamName, userGmail, content }) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/team/message/send`,
+          JSON.stringify({
+            team_name: teamName,
+            user_gmail: userGmail,
+            content: content
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTeamMessages", variables.teamName] });
+    },
+    retry: false,
+  });
+}
+
+//Delete Team Message
+export function useDeleteTeamMessageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteTeamMessage"],
+    mutationFn: async ({ messageId, userGmail }) => {
+      try {
+        const response = await axios.delete(
+          `${API_BASE_URL}/team/message/delete`,
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+            data: JSON.stringify({
+              message_id: messageId,
+              user_gmail: userGmail
+            }),
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTeamMessages"] });
+    },
+    retry: false,
+  });
+}
+
+//Mark Team Messages as Read
+export function useMarkTeamMessageAsReadMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["markTeamMessageAsRead"],
+    mutationFn: async ({ teamName, userGmail }) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/team/message/read`,
+          JSON.stringify({
+            team_name: teamName,
+            user_gmail: userGmail
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTeamUnreadCounts", variables.userGmail] });
+    },
+    retry: false,
+  });
+}
+
+//Create Subtask
+export function useCreateSubtaskMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["createSubtask"],
+    mutationFn: async ({ taskId, title, userGmail }) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/subtask/create`,
+          JSON.stringify({
+            task_id: parseInt(taskId, 10),
+            title: title,
+            user_gmail: userGmail
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getSubtasks", String(variables.taskId)] });
+    },
+    retry: false,
+  });
+}
+
+//Toggle Subtask
+export function useToggleSubtaskMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["toggleSubtask"],
+    mutationFn: async ({ subtaskId, isCompleted, taskId, userGmail }) => {
+      try {
+        const response = await axios.patch(
+          `${API_BASE_URL}/subtask/toggle`,
+          JSON.stringify({
+            subtask_id: subtaskId,
+            is_completed: isCompleted,
+            user_gmail: userGmail
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getSubtasks", String(variables.taskId)] });
+    },
+    retry: false,
+  });
+}
+
+//Delete Subtask
+export function useDeleteSubtaskMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteSubtask"],
+    mutationFn: async ({ subtaskId, taskId }) => {
+      try {
+        const response = await axios.delete(
+          `${API_BASE_URL}/subtask/delete`,
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+            data: JSON.stringify({
+              subtask_id: subtaskId
+            }),
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getSubtasks", String(variables.taskId)] });
+    },
+    retry: false,
+  });
+}
+
+//Create Task Comment
+export function useCreateTaskCommentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["createTaskComment"],
+    mutationFn: async ({ taskId, userGmail, content }) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/comment/create`,
+          JSON.stringify({
+            task_id: parseInt(taskId, 10),
+            user_gmail: userGmail,
+            content: content
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTaskComments", String(variables.taskId)] });
+    },
+    retry: false,
+  });
+}
+
+//Delete Task Comment
+export function useDeleteTaskCommentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteTaskComment"],
+    mutationFn: async ({ commentId, taskId, userGmail }) => {
+      try {
+        const response = await axios.delete(
+          `${API_BASE_URL}/comment/delete`,
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+            data: JSON.stringify({
+              comment_id: commentId,
+              user_gmail: userGmail
+            }),
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTaskComments", String(variables.taskId)] });
+    },
+    retry: false,
+  });
+}
+
+//Toggle Emoji Reaction
+export function useToggleReactionMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["toggleReaction"],
+    mutationFn: async ({ messageId, userGmail, emoji, teamName }) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/team/message/react`,
+          JSON.stringify({
+            message_id: messageId,
+            user_gmail: userGmail,
+            emoji: emoji
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTeamMessages", variables.teamName] });
+    },
+    retry: false,
+  });
+}
+
+//Ping User Active Status
+export function usePingUserMutation() {
+  return useMutation({
+    mutationKey: ["pingUser"],
+    mutationFn: async ({ userGmail }) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/user/ping`,
+          JSON.stringify({
+            user_gmail: userGmail
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    retry: false,
+  });
+}
+
+//Update Member Role
+export function useUpdateMemberRoleMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updateMemberRole"],
+    mutationFn: async ({ teamName, targetGmail, role, userGmail }) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/team/role/update`,
+          JSON.stringify({
+            team_name: teamName,
+            target_gmail: targetGmail,
+            role,
+            user_gmail: userGmail,
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTeamMembers", variables.teamName] });
+    },
+    retry: false,
+  });
+}

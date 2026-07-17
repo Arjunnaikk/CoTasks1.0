@@ -20,13 +20,20 @@ import { useCreateMyTeamTaskMutation } from "@/services/mutations"
 import { useGetTeamMembersQuery } from "@/services/queries"
 import { useToast } from "@/hooks/use-toast"
 
+const getTomorrow = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(12, 0, 0, 0);
+  return tomorrow;
+};
+
 export function Create({ userMail, teamId }) {
   const { toast } = useToast();
   const [form, setForm] = useState({
     title: '',
     description: '',
     priority: 1,
-    end_d: null,
+    end_d: getTomorrow().toISOString(),
     taskStatus: 'ongoing',
     userMail: userMail,
     teamName: teamId,
@@ -63,7 +70,7 @@ export function Create({ userMail, teamId }) {
       title: '',
       description: '',
       priority: 1,
-      end_d: '',
+      end_d: getTomorrow().toISOString(),
       taskStatus: 'ongoing',
       userMail: userMail,
       teamName: teamId,

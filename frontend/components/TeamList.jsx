@@ -2,7 +2,7 @@ import React from 'react';
 import AlertDialogDemo from '@/components/AlertDialogDemo';
 import { Users } from 'lucide-react';
 
-const TeamList = ({ teamName, handleClick, isSelected, handleTeamDelete }) => {
+const TeamList = ({ teamName, handleClick, isSelected, handleTeamDelete, unreadCount, isAdmin }) => {
   return (
     <div 
       onClick={handleClick}
@@ -15,13 +15,20 @@ const TeamList = ({ teamName, handleClick, isSelected, handleTeamDelete }) => {
       <div className="flex items-center gap-2.5 min-w-0">
         <Users className={`h-4.5 w-4.5 shrink-0 ${isSelected ? 'text-zinc-300' : 'text-zinc-500'}`} />
         <span className="truncate text-sm tracking-tight">{teamName}</span>
+        {unreadCount > 0 && (
+          <span className="shrink-0 flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-red-500 text-[9px] text-white font-bold select-none border border-[#09090b]">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
       </div>
-      <div className="shrink-0">
-        <AlertDialogDemo
-          isSelected2={isSelected}
-          handleTeamDelete={() => {handleTeamDelete(teamName)}}
-        />
-      </div>
+      {isAdmin && (
+        <div className="shrink-0">
+          <AlertDialogDemo
+            isSelected2={isSelected}
+            handleTeamDelete={() => {handleTeamDelete(teamName)}}
+          />
+        </div>
+      )}
     </div>
   );
 };

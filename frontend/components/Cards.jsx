@@ -53,9 +53,24 @@ const Card = ({ myTask, keye, listName }) => {
             </div>
 
             <div className="flex justify-between items-center mt-4 pt-3 border-t border-zinc-900/50">
-                <div className="flex items-center gap-1 text-zinc-500 text-xs">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>{task.start_d ? task.start_d.split(' ')[0] : 'N/A'}</span>
+                <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1 text-zinc-500 text-xs">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>{task.start_d ? task.start_d.split(' ')[0] : 'N/A'}</span>
+                    </div>
+                    {(() => {
+                        if (!task.end_d || task.status === 'completed') return null;
+                        const diff = new Date(task.end_d).getTime() - new Date().getTime();
+                        if (diff > 0 && diff < 24 * 60 * 60 * 1000) {
+                            return (
+                                <span className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-red-950/40 border border-red-500/30 text-red-400 font-medium animate-pulse select-none">
+                                    <CircleAlert className="w-2.5 h-2.5 shrink-0" />
+                                    Due soon
+                                </span>
+                            );
+                        }
+                        return null;
+                    })()}
                 </div>
             </div>
 

@@ -39,6 +39,7 @@ app.post('/team/fetch', fetchTeamValidator, async (c) => {
 		const userTeamsList = await db.select({
 			team_id: team.team_id,
 			team_title: team.title,
+			role: user_team.role,
 		})
 		.from(user_team)
 		.innerJoin(team, eq(user_team.team_id, team.team_id))
@@ -57,19 +58,28 @@ app.post('/team/create', createTeamValidator, async (c) => {
 	const { title, user_array } = await c.req.json() as any;
 
 	try {
+		// Prevent crash if group with name already exists
+		const [existingTeam] = await db.select().from(team).where(eq(team.title, title));
+		if (existingTeam) {
+			return c.json({ msg: "A group with this name already exists" }, 400);
+		}
+
 		// Create the team
 		const [newTeam] = await db.insert(team).values({ title }).returning();
 
 		// Add users to team
 		const membersAdded = [];
+		let isFirst = true;
 		for (const email of user_array) {
 			const [reqUser] = await db.select({ user_id: user.user_id, name: user.name }).from(user).where(eq(user.gmail, email));
 			if (reqUser) {
 				await db.insert(user_team).values({
 					team_id: newTeam.team_id,
 					user_id: reqUser.user_id,
+					role: isFirst ? 'admin' : 'member',
 				}).onConflictDoNothing();
 				membersAdded.push(reqUser.name);
+				isFirst = false;
 			}
 		}
 
@@ -85,7 +95,7 @@ app.post('/team/create', createTeamValidator, async (c) => {
 	}
 });
 
-// Delete a team
+// Delete a team (Admin only)
 app.delete('/team/delete', deleteTeamValidator, async (c) => {
 	const db = database(c.env.DB);
 	const { user_gmail, team_name } = await c.req.json() as any;
@@ -103,15 +113,15 @@ app.delete('/team/delete', deleteTeamValidator, async (c) => {
 			return c.json({ msg: "Team not found" }, 404);
 		}
 
-		// Verify user is member of the team to delete it
-		const [isMember] = await db.select().from(user_team).where(
+		// Verify user is the admin of the team to delete it
+		const [membership] = await db.select().from(user_team).where(
 			and(
 				eq(user_team.team_id, reqTeam.team_id),
 				eq(user_team.user_id, reqUser.user_id)
 			)
 		);
-		if (!isMember) {
-			return c.json({ msg: "Unauthorized" }, 403);
+		if (!membership || membership.role !== 'admin') {
+			return c.json({ msg: "Only the group admin can delete this group" }, 403);
 		}
 
 		// Delete references from user_team
@@ -143,6 +153,7 @@ const fetchTeamMembersSchema = z.object({
 });
 const fetchTeamMembersValidator = zValidator('json', fetchTeamMembersSchema);
 
+// Fetch team members with their roles
 app.post('/team/members', fetchTeamMembersValidator, async (c) => {
 	const db = database(c.env.DB);
 	const { team_name } = await c.req.json() as any;
@@ -158,6 +169,8 @@ app.post('/team/members', fetchTeamMembersValidator, async (c) => {
 			user_id: user.user_id,
 			name: user.name,
 			gmail: user.gmail,
+			last_active_at: user.last_active_at,
+			role: user_team.role,
 		})
 		.from(user_team)
 		.innerJoin(user, eq(user_team.user_id, user.user_id))
@@ -167,6 +180,59 @@ app.post('/team/members', fetchTeamMembersValidator, async (c) => {
 	} catch (error) {
 		console.error("Fetch team members error:", error);
 		return c.json({ msg: "couldn't fetch team members" }, 500);
+	}
+});
+
+// Update member role (admin access assignment)
+const updateRoleSchema = z.object({
+	team_name: z.string().max(50),
+	target_gmail: z.string().email().max(200),
+	role: z.enum(["admin", "member"]),
+	user_gmail: z.string().email().max(200),
+});
+const updateRoleValidator = zValidator('json', updateRoleSchema);
+
+app.post('/team/role/update', updateRoleValidator, async (c) => {
+	const db = database(c.env.DB);
+	const { team_name, target_gmail, role, user_gmail } = await c.req.json() as any;
+
+	try {
+		const decodedTeamName = decodeURIComponent(team_name);
+		const [reqTeam] = await db.select({ team_id: team.team_id }).from(team).where(eq(team.title, decodedTeamName));
+		if (!reqTeam) return c.json({ msg: "Team not found" }, 404);
+
+		// Verify caller is admin
+		const [callerUser] = await db.select({ user_id: user.user_id }).from(user).where(eq(user.gmail, user_gmail));
+		if (!callerUser) return c.json({ msg: "Caller user not found" }, 404);
+
+		const [callerMembership] = await db.select().from(user_team).where(
+			and(
+				eq(user_team.team_id, reqTeam.team_id),
+				eq(user_team.user_id, callerUser.user_id)
+			)
+		);
+		if (!callerMembership || callerMembership.role !== 'admin') {
+			return c.json({ msg: "Only admins can change roles" }, 403);
+		}
+
+		// Find target user
+		const [targetUser] = await db.select({ user_id: user.user_id }).from(user).where(eq(user.gmail, target_gmail));
+		if (!targetUser) return c.json({ msg: "Target user not found" }, 404);
+
+		// Update role
+		await db.update(user_team)
+			.set({ role })
+			.where(
+				and(
+					eq(user_team.team_id, reqTeam.team_id),
+					eq(user_team.user_id, targetUser.user_id)
+				)
+			);
+
+		return c.json({ msg: `Successfully updated role to ${role}` });
+	} catch (error) {
+		console.error("Update role error:", error);
+		return c.json({ msg: "Failed to update role" }, 500);
 	}
 });
 

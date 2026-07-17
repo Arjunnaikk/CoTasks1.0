@@ -103,7 +103,7 @@ export default function Home() {
   }, [session, userData, isLoading, createUserMutation.isLoading, createUserMutation.isSuccess]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-950 text-white selection:bg-white selection:text-black">
+    <div className="flex flex-col flex-1 w-full bg-zinc-950 text-white selection:bg-white selection:text-black">
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full min-h-[90vh] flex items-center justify-center py-20 px-6 border-b border-zinc-900 overflow-hidden">

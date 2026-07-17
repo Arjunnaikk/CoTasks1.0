@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import database from '../database';
 import { and, eq, or, inArray } from 'drizzle-orm';
-import { user, list, task, task_assigned } from '../database/schema';
+import { user, list, task, task_assigned, activity_log } from '../database/schema';
 import { createTaskValidator } from '../validators';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
@@ -145,6 +145,17 @@ app.patch('/myTask/update', updateTaskStatusValidator, async (c) => {
 			.set({ status })
 			.where(eq(task.task_id, matchingTasks[0].task_id))
 			.returning();
+
+		if (updatedTask && updatedTask.team_id) {
+			const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+			await db.insert(activity_log).values({
+				team_id: updatedTask.team_id,
+				user_id: reqUser.user_id,
+				action: "task_status_updated",
+				description: `updated task "${updatedTask.title}" status to "${status}"`,
+				created_at: timestamp,
+			});
+		}
 
 		return c.json({ ...updatedTask, msg: 'task status updated' });
 	} catch (error) {

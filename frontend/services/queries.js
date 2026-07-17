@@ -126,6 +126,95 @@ export function useGetTeamMembersQuery(teamName) {
       );
       return response.data;
     },
-    enabled: !!teamName
+    enabled: !!teamName,
+    refetchInterval: 10000, // Poll every 10 seconds for user activity/presence status
+  });
+}
+
+//Get team messages
+export function useGetTeamMessagesQuery(teamName) {
+  return useQuery({
+    queryKey: ["getTeamMessages", teamName],
+    queryFn: async () => {
+      const response = await axios.post(
+        `${API_BASE_URL}/team/message/fetch`,
+        {
+          team_name: teamName
+        }
+      );
+      return response.data;
+    },
+    enabled: !!teamName,
+    refetchInterval: 3000, // Poll every 3 seconds for new messages
+  });
+}
+
+//Get team unread counts
+export function useGetUnreadCountsQuery(userGmail) {
+  return useQuery({
+    queryKey: ["getTeamUnreadCounts", userGmail],
+    queryFn: async () => {
+      const response = await axios.post(
+        `${API_BASE_URL}/team/unread_counts`,
+        {
+          user_gmail: userGmail
+        }
+      );
+      return response.data;
+    },
+    enabled: !!userGmail,
+    refetchInterval: 5000, // Poll every 5 seconds for unread notifications
+  });
+}
+
+//Get subtasks for a task
+export function useGetSubtasksQuery(taskId) {
+  return useQuery({
+    queryKey: ["getSubtasks", taskId],
+    queryFn: async () => {
+      const response = await axios.post(
+        `${API_BASE_URL}/subtask/fetch`,
+        {
+          task_id: parseInt(taskId, 10)
+        }
+      );
+      return response.data;
+    },
+    enabled: !!taskId && taskId !== '10',
+  });
+}
+
+//Get comments for a task
+export function useGetTaskCommentsQuery(taskId) {
+  return useQuery({
+    queryKey: ["getTaskComments", taskId],
+    queryFn: async () => {
+      const response = await axios.post(
+        `${API_BASE_URL}/comment/fetch`,
+        {
+          task_id: parseInt(taskId, 10)
+        }
+      );
+      return response.data;
+    },
+    enabled: !!taskId && taskId !== '10',
+  });
+}
+
+//Get recent activity logs for a team
+export function useGetTeamActivityQuery(teamName) {
+  return useQuery({
+    queryKey: ["getTeamActivity", teamName],
+    queryFn: async () => {
+      const response = await axios.post(
+        `${API_BASE_URL}/team/activity/fetch`,
+        {
+          team_name: teamName
+        }
+      );
+      return response.data;
+    },
+    enabled: !!teamName,
+    refetchInterval: 10000, // Poll every 10 seconds for live updates
   });
 }

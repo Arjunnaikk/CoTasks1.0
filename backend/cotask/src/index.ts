@@ -20,6 +20,11 @@ import task from './routes/task';
 import team from './routes/team';
 import teamTask from './routes/teamTask';
 import taskAssigned from './routes/task_assigned';
+import teamMessage from './routes/team_message';
+import subtask from './routes/subtask';
+import comment from './routes/comment';
+import reaction from './routes/reaction';
+import activity from './routes/activity';
 
 const app = new Hono();
 
@@ -31,6 +36,11 @@ app.route('/', task);
 app.route('/', team);
 app.route('/', teamTask);
 app.route('/', taskAssigned);
+app.route('/', teamMessage);
+app.route('/', subtask);
+app.route('/', comment);
+app.route('/', reaction);
+app.route('/', activity);
 
 app.notFound((c) => c.json({ msg: 'not found' }, 404));
 

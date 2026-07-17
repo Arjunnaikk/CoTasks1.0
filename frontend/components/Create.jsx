@@ -21,13 +21,20 @@ import DatePickerDemo from "./DatePicker"
 import { useCreateMyTaskMutation } from "@/services/mutations"
 import { useToast } from "@/hooks/use-toast"
 
+const getTomorrow = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(12, 0, 0, 0);
+  return tomorrow;
+};
+
 export function Create({ userMail, listId }) {
   const { toast } = useToast();
   const [form, setForm] = useState({
     title: '',
     description: '',
     priority: 1,
-    end_d: null,
+    end_d: getTomorrow().toISOString(),
     taskStatus: 'ongoing',
     userMail: userMail,
     listName: listId
@@ -57,7 +64,7 @@ export function Create({ userMail, listId }) {
       title: '',
       description: '',
       priority: 1,
-      end_d: '',
+      end_d: getTomorrow().toISOString(),
       taskStatus: 'ongoing',
       userMail: userMail,
       listName: listId

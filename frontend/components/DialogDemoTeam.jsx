@@ -59,11 +59,10 @@ export function DialogDemo({ email, username}) {
           },
           onError: (error) => {
             console.error("Mutation error:", error)
-            alert("Failed to create list: " + error.message)
-            setOpen(false)
+            const errMsg = error.response?.data?.msg || error.response?.data?.message || error.message;
             toast({
               title: "Error",
-              description: "Failed to create team",
+              description: "Failed to create team: " + errMsg,
               variant: "destructive",
             })
           },
@@ -71,7 +70,11 @@ export function DialogDemo({ email, username}) {
       )
     } catch (error) {
       console.error("Submit error:", error)
-      alert("Error creating list: " + error.message)
+      toast({
+        title: "Error",
+        description: "Error creating list: " + error.message,
+        variant: "destructive",
+      })
     }
   }
 

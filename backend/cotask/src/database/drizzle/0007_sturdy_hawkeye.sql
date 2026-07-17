@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD `last_active_at` text DEFAULT '2026-07-17 00:00:00' NOT NULL;

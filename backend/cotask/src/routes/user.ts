@@ -3,6 +3,8 @@ import database from '../database';
 import { eq } from 'drizzle-orm';
 import { user } from '../database/schema';
 import { createUserValidator } from '../validators';
+import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -96,6 +98,29 @@ app.post('/my', createUserValidator, async (c) => {
 		return c.json({ ...newUser, msg: 'user created' });
 	} catch (error) {
 		return c.json({ msg: "couldn't create user" }, 500);
+	}
+});
+
+// Ping to update user's presence status
+const pingSchema = z.object({
+	user_gmail: z.string().email(),
+});
+const pingValidator = zValidator('json', pingSchema);
+
+app.post('/user/ping', pingValidator, async (c) => {
+	const db = database(c.env.DB);
+	const { user_gmail } = await c.req.json() as any;
+
+	try {
+		const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+		await db.update(user)
+			.set({ last_active_at: timestamp })
+			.where(eq(user.gmail, user_gmail));
+
+		return c.json({ msg: "pong", last_active_at: timestamp });
+	} catch (error) {
+		console.error("Ping error:", error);
+		return c.json({ msg: "couldn't update presence" }, 500);
 	}
 });
 
