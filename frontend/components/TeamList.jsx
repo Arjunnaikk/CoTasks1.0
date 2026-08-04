@@ -6,9 +6,9 @@ const TeamList = ({ teamName, handleClick, isSelected, handleTeamDelete, unreadC
   return (
     <div 
       onClick={handleClick}
-      className={`group px-4 py-3 w-[21vw] h-14 cursor-pointer rounded-xl flex justify-between items-center transition-all duration-200 border ${
+      className={`group px-4 py-3 w-full h-14 cursor-pointer rounded-xl flex justify-between items-center transition-all duration-200 border ${
         isSelected 
-          ? 'bg-zinc-900 border-zinc-850 text-white font-medium shadow-md shadow-black/20' 
+          ? 'bg-zinc-900 border-zinc-800 text-white font-medium shadow-md shadow-black/20' 
           : 'bg-transparent border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30'
       }`}
     >

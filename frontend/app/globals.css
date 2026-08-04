@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-img{
-  max-height: 32px ;
-  max-width: 32px;
-}
 .cardimg{
   max-height: 27px;
   max-width: 27px;
@@ -356,3 +352,53 @@ body{
   width: 0; /* Remove scrollbar space */
   background: transparent; /* Optional: just make scrollbar invisible */
 }
+
+/* Modern UI background grid pattern */
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 35px 35px;
+  background-position: center;
+}
+
+/* Neon glow dropdown-shadows */
+.shadow-neon-cyan {
+  filter: drop-shadow(0 0 15px rgba(34, 211, 238, 0.5));
+}
+.shadow-neon-pink {
+  filter: drop-shadow(0 0 15px rgba(244, 63, 94, 0.5));
+}
+.shadow-neon-orange {
+  filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.5));
+}
+.shadow-neon-violet {
+  filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.5));
+}
+
+/* Drift / Float animations */
+.animate-float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+.animate-float-medium {
+  animation: float-medium 5s ease-in-out infinite;
+}
+.animate-float-fast {
+  animation: float-fast 4s ease-in-out infinite;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(3deg); }
+}
+
+@keyframes float-medium {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(-3deg); }
+}
+
+@keyframes float-fast {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+

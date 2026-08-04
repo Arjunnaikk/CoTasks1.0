@@ -13,6 +13,7 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import database from './database';
 import user from './routes/user';
 import feedback from './routes/feedback';
 import list from './routes/list';
@@ -25,6 +26,7 @@ import subtask from './routes/subtask';
 import comment from './routes/comment';
 import reaction from './routes/reaction';
 import activity from './routes/activity';
+import notifications, { checkAndSendNotifications } from './routes/notifications';
 
 const app = new Hono();
 
@@ -41,7 +43,14 @@ app.route('/', subtask);
 app.route('/', comment);
 app.route('/', reaction);
 app.route('/', activity);
+app.route('/', notifications);
 
 app.notFound((c) => c.json({ msg: 'not found' }, 404));
 
-export default app;
+export default {
+	fetch: app.fetch,
+	async scheduled(event: any, env: Env, ctx: any) {
+		const db = database(env.DB);
+		await checkAndSendNotifications(db, env);
+	}
+};

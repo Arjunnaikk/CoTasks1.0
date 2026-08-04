@@ -218,3 +218,37 @@ export function useGetTeamActivityQuery(teamName) {
     refetchInterval: 10000, // Poll every 10 seconds for live updates
   });
 }
+
+// Get all due personal tasks for a user
+export function useGetDueTasksQuery(userGmail) {
+  return useQuery({
+    queryKey: ["getDueTasks", userGmail],
+    queryFn: async () => {
+      const response = await axios.post(
+        `${API_BASE_URL}/myTask/due`,
+        {
+          user_gmail: userGmail
+        }
+      );
+      return response.data;
+    },
+    enabled: !!userGmail,
+  });
+}
+
+// Get all due team tasks for a user
+export function useGetDueTeamTasksQuery(userGmail) {
+  return useQuery({
+    queryKey: ["getDueTeamTasks", userGmail],
+    queryFn: async () => {
+      const response = await axios.post(
+        `${API_BASE_URL}/teamTask/due`,
+        {
+          user_gmail: userGmail
+        }
+      );
+      return response.data;
+    },
+    enabled: !!userGmail,
+  });
+}

@@ -1,15 +1,12 @@
 "use client";
 
-import Sidebar from "@/components/Sidebar";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import ProfileSection from "@/components/ProfileSection";
 import FeedbackSection from "@/components/FeedbackSection";
 
 const Page = () => {
-
   const [selectedSection, setSelectedSection] = useState("profile");
 
-  // Subsections content
   const renderSectionContent = () => {
     switch (selectedSection) {
       case "profile":
@@ -17,44 +14,51 @@ const Page = () => {
       case "feedback":
         return <FeedbackSection />;
       default:
-        return <div className="text-white">Select a section</div>;
+        return <div className="text-white text-sm">Select a section</div>;
     }
   };
 
   return (
-    <>
-      {/* Sidebar with subsections */}
-      <div className='w-[23vw] h-[90.8vh] bg-[#09090b] top-[55px] sticky rounded-md m-1 flex flex-col items-center gap-3 p-2 border-zinc-800 border-[0.5px]'>
-      <div className='h-auto px-[1px] py-[10px] bg-[#09090b] w-[90%] rounded-md flex flex-col gap-2 justify-center items-center'>
-          <h3 className='text-2xl font-bold text-white'>Setting</h3>
-          <div className='w-[21vw] h-[0.5px] bg-zinc-700'></div>
+    <div className="flex flex-row flex-1 w-full min-w-0 bg-[#09090b] h-full overflow-hidden">
+      {/* Settings Navigation Sidebar (Flush) */}
+      <div className="w-[280px] h-full bg-[#09090b]/30 border-r border-zinc-900 flex flex-col p-4 shrink-0 gap-4">
+        <div className="flex flex-col gap-2.5 px-2 py-3">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Settings</h3>
+          <div className="w-full h-px bg-zinc-900 mt-2"></div>
         </div>
 
         {/* Subsection buttons */}
-        <button
-          onClick={() => setSelectedSection("profile")}
-          className={`text-white py-2 px-4 rounded-md w-[90%] text-left ${
-            selectedSection === "profile" ? "bg-zinc-800" : "bg-#18181b"
-          }`}
-        >
-          Profile
-        </button>
-        <button
-          onClick={() => setSelectedSection("feedback")}
-          className={`text-white py-2 px-4 rounded-md w-[90%] text-left ${
-            selectedSection === "feedback" ? "bg-zinc-800" : "bg-#18181b"
-          }`}
-        >
-          Feedback
-        </button>
+        <div className="flex flex-col gap-1">
+          <button
+            onClick={() => setSelectedSection("profile")}
+            className={`py-2.5 px-4 rounded-xl w-full text-left text-xs font-semibold transition-all duration-200 ${
+              selectedSection === "profile"
+                ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50"
+            }`}
+          >
+            Profile Settings
+          </button>
+          <button
+            onClick={() => setSelectedSection("feedback")}
+            className={`py-2.5 px-4 rounded-xl w-full text-left text-xs font-semibold transition-all duration-200 ${
+              selectedSection === "feedback"
+                ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50"
+            }`}
+          >
+            Feedback & Support
+          </button>
+        </div>
       </div>
 
-      {/* Main content area */}
-      <div className="h-auto w-[90vw] bg-#09090b m-2 flex flex-col items-center gap-10 pt-[15px]">
-        {/* Render subsection content based on selection */}
-        {renderSectionContent()}
+      {/* Main Settings Panel */}
+      <div className="flex-grow h-full overflow-y-auto p-8 bg-zinc-950/10">
+        <div className="w-full max-w-2xl">
+          {renderSectionContent()}
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -1,12 +1,25 @@
 import { Hono } from 'hono';
 import database from '../database';
-import { and, eq, or, inArray } from 'drizzle-orm';
+import { and, eq, or, inArray, lt, isNotNull } from 'drizzle-orm';
 import { user, list, task, task_assigned, activity_log } from '../database/schema';
 import { createTaskValidator } from '../validators';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 
 const app = new Hono<{ Bindings: Env }>();
+
+const autoUpdateOverdueTasks = async (db: any) => {
+	const now = new Date();
+	await db.update(task)
+		.set({ status: 'missed' })
+		.where(
+			and(
+				inArray(task.status, ['backlog', 'in_progress', 'ongoing', 'blocked', 'in_review']),
+				isNotNull(task.end_d),
+				lt(task.end_d, now)
+			)
+		);
+};
 
 const fetchTaskSchema = z.object({
 	user_gmail: z.string().email().max(200),
@@ -17,7 +30,7 @@ const fetchTaskValidator = zValidator('json', fetchTaskSchema);
 const updateTaskStatusSchema = z.object({
 	user_gmail: z.string().email().max(200),
 	task_name: z.string().max(100),
-	status: z.enum(["completed", "ongoing", "missed"]),
+	status: z.enum(["backlog", "in_progress", "ongoing", "in_review", "blocked", "completed", "missed"]),
 });
 const updateTaskStatusValidator = zValidator('json', updateTaskStatusSchema);
 
@@ -33,6 +46,7 @@ app.post('/myTask/fetch', fetchTaskValidator, async (c) => {
 	const { user_gmail, list_name } = await c.req.json() as any;
 
 	try {
+		await autoUpdateOverdueTasks(db);
 		const [reqUser] = await db.select({ user_id: user.user_id }).from(user).where(eq(user.gmail, user_gmail));
 		if (!reqUser) {
 			return c.json({ msg: "User not found" }, 404);
@@ -83,7 +97,8 @@ app.post('/myTask/create', createTaskValidator, async (c) => {
 			}).returning({ list_id: list.list_id });
 		}
 
-		const taskStatus = (status === 'completed' || status === 'ongoing' || status === 'missed') ? status : 'ongoing';
+		const validStatuses = ["backlog", "in_progress", "ongoing", "in_review", "blocked", "completed", "missed"];
+		const taskStatus = validStatuses.includes(status) ? status : 'backlog';
 
 		const [newTask] = await db.insert(task).values({
 			title,
@@ -190,6 +205,40 @@ app.delete('/myTask/delete', deleteTaskValidator, async (c) => {
 	} catch (error) {
 		console.error("Delete task error:", error);
 		return c.json({ msg: "couldn't delete task" }, 500);
+	}
+});
+
+// Fetch all due/overdue personal tasks for a user
+app.post('/myTask/due', zValidator('json', z.object({ user_gmail: z.string().email() })), async (c) => {
+	const db = database(c.env.DB);
+	const { user_gmail } = await c.req.json() as any;
+
+	try {
+		await autoUpdateOverdueTasks(db);
+		const [reqUser] = await db.select({ user_id: user.user_id }).from(user).where(eq(user.gmail, user_gmail));
+		if (!reqUser) {
+			return c.json({ msg: "User not found" }, 404);
+		}
+
+		// Find lists belonging to this user
+		const userLists = await db.select({ list_id: list.list_id }).from(list).where(eq(list.user_id, reqUser.user_id));
+		const listIds = userLists.map(l => l.list_id);
+		if (listIds.length === 0) {
+			return c.json({ tasks: [] });
+		}
+
+		// Fetch tasks belonging to these lists that are NOT completed
+		const tasks = await db.select().from(task).where(
+			and(
+				inArray(task.list_id, listIds),
+				inArray(task.status, ['backlog', 'in_progress', 'ongoing', 'blocked', 'in_review'])
+			)
+		);
+
+		return c.json({ tasks });
+	} catch (error) {
+		console.error("Fetch due tasks error:", error);
+		return c.json({ msg: "couldn't fetch due tasks" }, 500);
 	}
 });
 

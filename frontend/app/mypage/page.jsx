@@ -3,13 +3,14 @@
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
-import { useGetMyTaskQuery, useGetListQuery } from "@/services/queries";
+import { useGetListQuery, useGetDueTasksQuery } from "@/services/queries";
 import { useDeleteListMutation } from "@/services/mutations";
 import DialogDemo from '@/components/DialogDemo';
 import List from "@/components/List";
 import SkeletonDemo from "@/components/SkeletonDemo";
+import Cards from '@/components/Cards';
 
-const ErrorComponent = ({ error }) => <div>Error: {error?.message || "An error occurred"}</div>;
+const ErrorComponent = ({ error }) => <div className="text-red-500 p-4">Error: {error?.message || "An error occurred"}</div>;
 
 const Page = ({ params }) => {
   const router = useRouter();
@@ -32,6 +33,7 @@ const Page = ({ params }) => {
   }, [status, router]);
 
   const { data: listData, isLoading: listLoading, error: listError } = useGetListQuery(session?.user?.email);
+  const { data: dueData, isLoading: dueLoading } = useGetDueTasksQuery(session?.user?.email);
   const deleteListMutation = useDeleteListMutation();
 
   const handleListDelete = async (listName) => {
@@ -46,18 +48,27 @@ const Page = ({ params }) => {
     }
   };
 
-  if (listLoading) return <SkeletonDemo />;
+  const getListNameById = (listId) => {
+    const found = listData?.newList?.find(l => l.list_id === listId);
+    return found ? found.name : '';
+  };
+
+  if (listLoading || dueLoading) return <SkeletonDemo />;
   if (listError) return <ErrorComponent error={listError} />;
 
+  const dueTasks = dueData?.tasks || [];
+
   return (
-    <>
-      {/* Sidebar */}
-      <div className='w-[23vw] h-[90.8vh] bg-[#09090b] top-[55px] sticky rounded-md m-1 flex flex-col items-center gap-3 p-1 border-zinc-800 border-[0.5px]'>
-        <div className='h-auto px-[1px] py-[10px] bg-[#09090b] w-[90%] rounded-md flex flex-col gap-2 justify-center items-center'>
-          <h3 className='text-2xl font-bold text-white'>My List</h3>
-          <div className='w-[21vw] h-[0.5px] bg-zinc-700'></div>
-          <div className="h-[71vh] overflow-y-scroll bg-[#09090b]">
-            <div className="flex flex-col">
+    <div className="flex flex-row flex-1 w-full min-w-0 bg-[#09090b] h-full overflow-hidden">
+      {/* Sidebar (Lists) */}
+      <div className="w-[280px] h-full bg-[#09090b]/30 border-r border-zinc-900 flex flex-col p-4 shrink-0 justify-between">
+        <div className="flex flex-col gap-4 min-h-0">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">My Lists</h3>
+          </div>
+          <div className="w-full h-px bg-zinc-900"></div>
+          <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+            <div className="flex flex-col w-full gap-1">
               {(Array.isArray(listData?.newList) ? listData.newList : []).map((item, index) => (
                 <List 
                   key={index} 
@@ -70,33 +81,51 @@ const Page = ({ params }) => {
             </div>
           </div>
         </div>
-        <div className='fixed bottom-8'>
+        <div className="pt-4 border-t border-zinc-900 w-full flex justify-center shrink-0">
           <DialogDemo email={session?.user?.email} />
         </div>
       </div>
 
-      {/* My Page */}
-<div className="flex-1 p-8 flex flex-col">
-  <div className="mb-8 text-center">
-    <h1 className="text-3xl font-bold text-white">Create Your List Of Tasks</h1>
-    <div className="h-[1px] bg-zinc-700 mt-2 w-[50%]m-auto"></div>
-    <p className="text-zinc-400 mt-4">Select a list from the sidebar or create a new one to get started.</p>
-  </div>
-  
-  <div className="flex items-center justify-center flex-1">
-    <div className="text-center p-8 border border-dashed border-zinc-700 rounded-lg max-w-lg">
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-zinc-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-      <h3 className="text-xl font-medium text-white mb-2">No list selected</h3>
-      <p className="text-zinc-400 mb-6">Choose a list from the sidebar or create a new one to start organizing your tasks.</p>
-      <div className=''>
-          <DialogDemo email={session?.user?.email} />
+      {/* Main Content Area */}
+      <div className="flex-1 p-8 flex flex-col min-w-0 overflow-y-auto bg-zinc-950/10 h-full">
+        <div className="mb-6 text-left">
+          <h1 className="text-2xl font-bold text-white tracking-tight">Personal Tasks Overview</h1>
+          <p className="text-zinc-500 mt-1 text-xs">Select a list workspace from the sidebar or view your active tasks below.</p>
         </div>
+        
+        <div className="bg-gradient-to-br from-zinc-900/10 to-zinc-950/30 border border-zinc-900 rounded-2xl p-6 min-w-0 shadow-lg">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 border-b border-zinc-900 pb-3 mb-6">
+            Active Due Tasks
+          </h2>
+          
+          {dueTasks.length > 0 ? (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              {dueTasks.map((task, idx) => {
+                const listName = getListNameById(task.list_id);
+                return (
+                  <Cards 
+                    key={task.task_id}
+                    myTask={{ newTask: dueTasks }}
+                    keye={idx}
+                    listName={listName}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-16 border border-dashed border-zinc-900 rounded-2xl flex flex-col items-center justify-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <div className="text-center space-y-1">
+                <h3 className="text-xs font-semibold text-zinc-300">All caught up!</h3>
+                <p className="text-[11px] text-zinc-500 max-w-xs mx-auto">No personal tasks are currently due. Select a list to create a task.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-</>
   );
 };
 

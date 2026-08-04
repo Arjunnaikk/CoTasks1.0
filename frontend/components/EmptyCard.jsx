@@ -1,24 +1,14 @@
 'use client'
 
+import React from 'react';
+import { ClipboardList } from 'lucide-react';
 
 const Card = () => {
     return (
-        <div className='bg-#09090b border border-zinc-800 border-1 w-[35vw] h-[22vh] rounded-lg flex flex-col relative hover:bg-zinc-800 transition-colors cursor-pointer'>
-            <div className='flex flex-row'>
-                <h1 className='text-2xl font-semibold text-white flex p-2 ml-7 items-center'>No Task</h1>
-            </div>
-            <div className='text-sm font-inter font-poppins text-white flex pl-10 pr-1 py-1 overflow-hidden w-[70%] h-[auto]'>
-                <span>Please add a task</span>
-            {/* </div>
-            <div className='absolute right-10 top-2 w-auto flex flex-row gap-5 justify-center text-white'>
-                {task.priority === 1 && <ArrowDown />}
-                {task.priority === 2 && <ArrowRight />}
-                {task.priority === 3 && <ArrowUp />}
-            </div>
-            <div className='absolute right-7 bottom-3 text-white font-thin text-xs'>
-                {task.start_d.split(' ')[0]}
-            </div> */}
-        </div>
+        <div className='bg-gradient-to-br from-zinc-900/30 to-zinc-950/50 border border-zinc-900 border-dashed w-full h-[180px] rounded-2xl flex flex-col justify-center items-center gap-2 p-5 text-zinc-500 hover:text-zinc-400 transition-colors duration-200 select-none'>
+            <ClipboardList className='h-8 w-8 text-zinc-700' />
+            <h1 className='text-sm font-semibold text-zinc-300'>No tasks found</h1>
+            <p className='text-xs text-zinc-500 text-center leading-relaxed max-w-[200px]'>Add a new task to get started on this list workspace.</p>
         </div>
     );
 }

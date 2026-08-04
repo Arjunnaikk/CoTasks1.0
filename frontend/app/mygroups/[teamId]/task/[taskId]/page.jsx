@@ -10,7 +10,7 @@ import SubtaskList from '@/components/SubtaskList';
 import TaskComments from '@/components/TaskComments';
 import ActivityFeed from '@/components/ActivityFeed';
 import TeamMembersList from '@/components/TeamMembersList';
-import { Trash2, Menu, ArrowUp, ArrowDown, ArrowRight } from 'lucide-react';
+import { Trash2, Menu, ArrowUp, ArrowDown, ArrowRight, Search, Calendar, Bell, SlidersHorizontal } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,35 +19,51 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import CreateTeam from '@/components/CreateTeam';
 import MyTeamCard from '@/components/MyTeamCard';
 import TeamList from '@/components/TeamList';
 import EmptyCard from '@/components/EmptyCard';
-import DialogDemoTeam from '@/components/DialogDemoTeam';
 import SkeletonDemo from "@/components/SkeletonDemo";
+import DialogDemoTeam from '@/components/DialogDemoTeam';
 import { CheckCheck } from "lucide-react";
 import { CircleAlert } from "lucide-react";
-
 import { useToast } from "@/hooks/use-toast";
 import AlertDialogDemo from "@/components/AlertDialogDemo";
-import { Search } from "lucide-react";
-const ErrorComponent = ({ error }) => <div>Error: {error?.message || "An error occurred"}</div>;
+
+const ErrorComponent = ({ error }) => <div className="text-red-500 p-4">Error: {error?.message || "An error occurred"}</div>;
+
+const statusConfig = {
+  backlog: { label: "Backlog", color: "bg-zinc-500" },
+  in_progress: { label: "In Progress", color: "bg-sky-500" },
+  ongoing: { label: "Ongoing", color: "bg-amber-500" },
+  in_review: { label: "In Review", color: "bg-purple-500" },
+  blocked: { label: "Blocked", color: "bg-rose-650" },
+  completed: { label: "Completed", color: "bg-emerald-500" },
+  missed: { label: "Missed", color: "bg-rose-550" },
+};
 
 const Page = ({ params }) => {
   const router = useRouter();
   const { toast } = useToast();
   const { data: session } = useSession();
-  //if(session === null) return;
-  // if(!session) {
-  //     router.push('/api/auth/signin');   
-  // }
+
+  const [activeTab, setActiveTab] = useState(params.taskId === '10' ? 'chat' : 'task');
+
+  // Sync activeTab when taskId changes
+  useEffect(() => {
+    if (params.taskId && params.taskId !== '10') {
+      setActiveTab('task');
+    } else {
+      setActiveTab('chat');
+    }
+  }, [params.taskId]);
+
   // Queries
-  const { data: myTeamTask, isLoading, error } = useGetMyTeamTaskQuery(session?.user?.email, params.teamId);
   const { data: teamData, isLoading: teamLoading, error: teamError } = useGetMyTeamQuery(session?.user?.email);
-  const { data: assignedData, isLoading: teamAssignedLoading, error: teamAssignedError } = useGetAssignedQuery(params.teamId, params.taskId);
-  const { data: unreadData } = useGetUnreadCountsQuery(session?.user?.email);
-  const unreadCounts = unreadData?.unreadCounts || {};
+  const { data: myTeamTask, isLoading, error } = useGetMyTeamTaskQuery(session?.user?.email, params.teamId);
+  const { data: unreadCounts = {} } = useGetUnreadCountsQuery(session?.user?.email);
   const activeTeamUnreadCount = unreadCounts[params.teamId] || 0;
   const { data: teamMembersData, isLoading: teamMembersLoading } = useGetTeamMembersQuery(params.teamId);
   const updateTaskStatusMutation = useUpdateTaskStatusMutation();
@@ -95,22 +111,6 @@ const Page = ({ params }) => {
     }
   };
 
-  const isAssigneeOnlineById = (assigneeUserId) => {
-    const member = teamMembersData?.members?.find(m => m.user_id === assigneeUserId);
-    return member ? isUserOnline(member.last_active_at) : false;
-  };
-
-  const [activeTab, setActiveTab] = useState(params.taskId === '10' ? 'chat' : 'task');
-
-  // Sync activeTab when taskId changes: if user clicks a task, switch to 'task' tab
-  useEffect(() => {
-    if (params.taskId !== '10') {
-      setActiveTab('task');
-    } else {
-      setActiveTab('chat');
-    }
-  }, [params.taskId]);
-
   const currentUser = teamMembersData?.members?.find(m => m.gmail === session?.user?.email);
   const currentUserId = currentUser?.user_id || 0;
 
@@ -122,20 +122,36 @@ const Page = ({ params }) => {
     sortedTasks: [],
     filteredTasks: [],
     selectedTeam: params.teamId,
-    priorityFilter: 'all'
+    priorityFilter: 'all',
+    statusFilter: 'all',
+    dueSoonFilter: false
   });
+
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const filtered = pageState.tasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(pageState.searchQuery.toLowerCase()) ||
         task.descrption.toLowerCase().includes(pageState.searchQuery.toLowerCase());
+      
       const matchesPriority = pageState.priorityFilter === 'all' || task.priority === parseInt(pageState.priorityFilter, 10);
-      return matchesSearch && matchesPriority;
+      
+      const matchesStatus = pageState.statusFilter === 'all' || task.status === pageState.statusFilter;
+      
+      let matchesDueSoon = true;
+      if (pageState.dueSoonFilter) {
+        if (!task.end_d || task.status === 'completed') {
+          matchesDueSoon = false;
+        } else {
+          const diff = new Date(task.end_d).getTime() - new Date().getTime();
+          matchesDueSoon = diff > 0 && diff < 24 * 60 * 60 * 1000;
+        }
+      }
+
+      return matchesSearch && matchesPriority && matchesStatus && matchesDueSoon;
     });
     setPageState(prev => ({ ...prev, filteredTasks: filtered }));
-  }, [pageState.searchQuery, pageState.priorityFilter, pageState.tasks]);
-
-    
+  }, [pageState.searchQuery, pageState.priorityFilter, pageState.statusFilter, pageState.dueSoonFilter, pageState.tasks]);
 
   useEffect(() => {
     if (myTeamTask) {
@@ -150,27 +166,35 @@ const Page = ({ params }) => {
     }
   }, [myTeamTask, params.taskId]);
 
-
+  const activeFiltersCount = (pageState.priorityFilter !== 'all' ? 1 : 0) + 
+                             (pageState.statusFilter !== 'all' ? 1 : 0) + 
+                             (pageState.dueSoonFilter ? 1 : 0);
 
   if (isLoading || teamLoading || teamMembersLoading || !myTeamTask || !teamData) return <SkeletonDemo />;
   if (error || teamError) return <ErrorComponent error={error || teamError} />;
 
-    const handleSearch = (e) => {
+  const handleSearch = (e) => {
     setPageState(prev => ({ ...prev, searchQuery: e.target.value }));
   };
-  // Handlers
-  const handleRoute = (teamTitle, taskId = 10) => {
-    setPageState(prev => ({ ...prev, selectedTeam: teamTitle }));
-    router.push(`/mygroups/${teamTitle}/task/${taskId}`);
+
+  const handleRoute = (name) => {
+    setPageState(prev => ({ ...prev, selectedTeam: name }));
+    router.push(`/mygroups/${name}/task/10`);
+  };
+
+  const handleRoute2 = (name, taskId) => {
+    router.push(`/mygroups/${name}/task/${taskId}`);
   };
 
   const handleSort = () => {
     const newDirection = pageState.sortDirection === 'asc' ? 'desc' : 'asc';
-    const sortedTasks = [...pageState.filteredTasks].sort((a, b) =>
-      newDirection === 'asc' ? a.priority - b.priority : b.priority - a.priority
-    );
+    const sortedTasks = [...pageState.filteredTasks].sort((a, b) => {
+      return newDirection === 'asc' ? 
+        a.priority - b.priority : 
+        b.priority - a.priority;
+    });
 
-    setPageState((prev) => ({
+    setPageState(prev => ({
       ...prev,
       sortDirection: newDirection,
       filteredTasks: sortedTasks,
@@ -202,13 +226,11 @@ const Page = ({ params }) => {
     if (!pageState.task) return;
 
     try {
-      // Perform the mutation
-      const updatedTask = await updateTaskStatusMutation.mutateAsync({
+      await updateTaskStatusMutation.mutateAsync({
         user_gmail: session?.user?.email,
-        task_name: pageState.task.title, // Assuming the task has a title field
+        task_name: pageState.task.title,
         status: newStatus,
       });
-      // Update the state based on the mutation response
       setPageState((prev) => {
         const updatedTasks = prev.tasks.map((t) =>
           t.task_id === prev.task.task_id ? { ...t, status: newStatus } : t
@@ -247,7 +269,7 @@ const Page = ({ params }) => {
         variant: "dark",
       });
 
-      router.push(`/mygroups/${params.teamId}/task/0`);
+      router.push(`/mygroups/${params.teamId}/task/10`);
     } catch (error) {
       console.error("Error deleting task:", error);
       toast({
@@ -258,16 +280,17 @@ const Page = ({ params }) => {
     }
   };
 
-
   return (
-    <>
-      {/* Sidebar */}
-      <div className='w-[23vw] h-[90.8vh] bg-[#09090b] top-[55px] sticky rounded-md m-1 flex flex-col items-center gap-3 p-1 border-zinc-800 border-[0.5px]'>
-        <div className='h-auto px-[1px] py-[10px] bg-[#09090b] w-[90%] rounded-md flex flex-col gap-2 justify-center items-center'>
-          <h3 className='text-2xl font-bold bg-zinc-900 text-white'>Groups</h3>
-          <div className='w-[21vw] h-[0.5px] bg-zinc-700'></div>
-          <div className="h-[71vh] overflow-y-scroll bg-[#09090b]">
-            <div className="flex flex-col">
+    <div className="flex flex-row flex-1 w-full min-w-0 bg-[#09090b] h-full overflow-hidden">
+      {/* Sidebar (Groups) */}
+      <div className="w-[280px] h-full bg-[#09090b]/30 border-r border-zinc-900 flex flex-col p-4 shrink-0 justify-between">
+        <div className="flex flex-col gap-4 min-h-0">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Collaborative Groups</h3>
+          </div>
+          <div className="w-full h-px bg-zinc-900"></div>
+          <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+            <div className="flex flex-col w-full gap-1">
               {Array.isArray(teamData?.teamTitle) && teamData.teamTitle.length > 0 ? (
                 teamData.teamTitle.map((item, index) => (
                   <TeamList
@@ -281,40 +304,72 @@ const Page = ({ params }) => {
                   />
                 ))
               ) : (
-                <div className="text-white">No lists available</div>
+                <div className="text-zinc-500 text-xs py-4 text-center">No lists available</div>
               )}
             </div>
           </div>
         </div>
-        <div className='fixed bottom-8'>
+        <div className="pt-4 border-t border-zinc-900 w-full flex justify-center shrink-0">
           <DialogDemoTeam email={session?.user?.email} username={session?.user?.name} />
         </div>
       </div>
 
-      {/* My Page */}
-      <div className='h-auto w-auto bg-[#09090b] m-2 flex flex-col items-start gap-6 pt-[50px]'>
-        <div className="w-full mb-3 px-3 flex flex-col sm:flex-row items-center gap-3">
-          <div className="relative flex-grow w-full">
+      {/* Tasks List Column (Middle) */}
+      <div className="flex-1 h-full border-r border-zinc-900 flex flex-col p-6 bg-zinc-950/10 overflow-y-auto">
+        {/* Search Row */}
+        <div className="w-full flex items-center gap-2 mb-3">
+          {/* Text Search */}
+          <div className="relative flex-grow">
             <Input
               type="text"
               placeholder="Search tasks..."
               value={pageState.searchQuery}
               onChange={handleSearch}
-              className="w-full pl-10 pr-4 py-2 bg-[#18181b] text-white border-zinc-750 rounded-md focus:border-purple-500/50"
+              className="w-full pl-10 pr-4 h-9 bg-[#18181b] text-white border-zinc-800 rounded-md text-xs focus:border-purple-500/50"
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500 h-3.5 w-3.5" />
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-            {/* Priority Filter Select */}
+          {/* Sort Button */}
+          <Button
+            variant="default"
+            onClick={handleSort}
+            className="bg-[#18181b] border border-zinc-800 text-white hover:bg-zinc-800 flex items-center gap-1.5 h-9 px-3 text-xs rounded-md shrink-0"
+          >
+            <span>Sort</span>
+            {pageState.sortDirection === 'asc' ? (
+              <ArrowUp className="h-3.5 w-3.5" />
+            ) : (
+              <ArrowDown className="h-3.5 w-3.5" />
+            )}
+          </Button>
+
+          {/* Toggle Extra Filters Button */}
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`h-9 w-9 p-0 flex items-center justify-center rounded-md transition-all duration-200 border-zinc-800 shrink-0 ${
+              showFilters || pageState.priorityFilter !== 'all' || pageState.statusFilter !== 'all' || pageState.dueSoonFilter
+                ? 'bg-purple-950/20 text-purple-400 border-purple-500/30' 
+                : 'bg-[#18181b] text-zinc-300 hover:bg-zinc-800'
+            }`}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Collapsible Filters Panel */}
+        {showFilters && (
+          <div className="w-full mb-3 flex flex-wrap items-center gap-2 p-1.5 bg-zinc-950/40 border border-zinc-900 rounded-md animate-in fade-in slide-in-from-top-1 duration-150 shrink-0">
+            {/* Priority Filter */}
             <Select
               value={pageState.priorityFilter}
               onValueChange={(val) => setPageState(prev => ({ ...prev, priorityFilter: val }))}
             >
-              <SelectTrigger className="w-[130px] bg-[#18181b] border-zinc-750 text-zinc-300">
+              <SelectTrigger className="w-[120px] h-8 bg-[#18181b] border-zinc-800 text-zinc-300 text-xs rounded-md px-2">
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
+              <SelectContent className="bg-zinc-950 border-zinc-900 text-white text-xs">
                 <SelectItem value="all">All Priorities</SelectItem>
                 <SelectItem value="1">Low Priority</SelectItem>
                 <SelectItem value="2">Mid Priority</SelectItem>
@@ -322,44 +377,78 @@ const Page = ({ params }) => {
               </SelectContent>
             </Select>
 
-            {/* Sort Button */}
-            <Button
-              variant="default"
-              onClick={handleSort}
-              className="bg-[#18181b] border border-zinc-750 text-white hover:bg-zinc-800 flex items-center gap-2 h-9 px-3 shrink-0"
+            {/* Status Filter */}
+            <Select
+              value={pageState.statusFilter}
+              onValueChange={(val) => setPageState(prev => ({ ...prev, statusFilter: val }))}
             >
-              Sort
-              {pageState.sortDirection === 'asc' ? (
-                <ArrowUp className="h-3.5 w-3.5" />
-              ) : (
-                <ArrowDown className="h-3.5 w-3.5" />
-              )}
+              <SelectTrigger className="w-[130px] h-8 bg-[#18181b] border-zinc-800 text-zinc-300 text-xs rounded-md px-2">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-950 border-zinc-900 text-white text-xs">
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="backlog">Backlog</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="ongoing">Ongoing</SelectItem>
+                <SelectItem value="in_review">In Review</SelectItem>
+                <SelectItem value="blocked">Blocked</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="missed">Missed</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Due Soon Toggle */}
+            <Button
+              variant="outline"
+              onClick={() => setPageState(prev => ({ ...prev, dueSoonFilter: !prev.dueSoonFilter }))}
+              className={`h-8 px-2.5 text-xs flex items-center gap-1.5 rounded-md transition-all duration-200 border-zinc-800 ${
+                pageState.dueSoonFilter 
+                  ? 'bg-red-950/30 text-red-400 border-red-500/40 hover:bg-red-950/50' 
+                  : 'bg-[#18181b] text-zinc-300 hover:bg-zinc-800'
+              }`}
+            >
+              <Bell className={`h-3.5 w-3.5 ${pageState.dueSoonFilter ? 'text-red-400 animate-pulse' : 'text-zinc-400'}`} />
+              <span>Due Soon</span>
             </Button>
+
+            {/* Clear Button */}
+            {(pageState.priorityFilter !== 'all' || pageState.statusFilter !== 'all' || pageState.dueSoonFilter) && (
+              <Button
+                variant="ghost"
+                onClick={() => setPageState(prev => ({ ...prev, priorityFilter: 'all', statusFilter: 'all', dueSoonFilter: false }))}
+                className="h-8 px-2 text-[10px] text-zinc-500 hover:text-zinc-300 hover:bg-transparent ml-auto"
+              >
+                Clear Filters
+              </Button>
+            )}
           </div>
-        </div>
-        <div className='h-auto w-auto bg-[#09090b] m-2 flex flex-col items-start gap-6'>
+        )}
+
+        {/* Task Cards Container */}
+        <div className="flex-1 overflow-y-auto w-full pr-1 max-h-[80vh]">
           {Array.isArray(pageState.filteredTasks) && pageState.filteredTasks.length > 0 ? (
-            pageState.filteredTasks.map((item, index) => (
-              <MyTeamCard
-                key={index}
-                myTeamTask={pageState.filteredTasks}
-                keye={index}
-                teamName={params.teamId}
-                handleClick={() => handleRoute(item.name)}
-              />
-            ))
+            <div className="flex flex-col gap-3">
+              {pageState.filteredTasks.map((item, index) => (
+                <MyTeamCard
+                  key={item.task_id}
+                  myTeamTask={pageState.filteredTasks}
+                  keye={index}
+                  teamName={params.teamId}
+                  handleClick={() => handleRoute2(params.teamId, item.task_id)}
+                />
+              ))}
+            </div>
           ) : (
             <EmptyCard />
           )}
-
         </div>
       </div>
 
-      {/* Task Detail */}
-      <div className='h-[90.8vh] w-[35vw] rounded-md bg-[#09090b] top-[55px] left-[10px] sticky m-2 flex flex-col border border-zinc-800 overflow-hidden'>
+      {/* Task Detail / Chat / Feed Panel */}
+      <div className="w-full lg:w-[42vw] xl:w-[500px] shrink-0 h-auto lg:h-[90.8vh] rounded-2xl bg-[#09090b]/80 backdrop-blur-xl lg:sticky lg:top-[55px] m-1.5 flex flex-col border border-zinc-800/80 overflow-hidden shadow-lg shadow-black/20">
         {/* Tab Switcher Header */}
-        <div className="bg-zinc-900 border-b border-zinc-800 p-3 flex items-center justify-between shrink-0">
-          <div className="flex space-x-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800/80">
+        <div className="bg-zinc-900/40 border-b border-zinc-800 p-3 flex items-center justify-between shrink-0">
+          <div className="flex flex-nowrap overflow-x-auto scrollbar-none gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800/80">
             {params.taskId !== '10' && (
               <button
                 type="button"
@@ -412,7 +501,7 @@ const Page = ({ params }) => {
           </div>
 
           {/* Action Buttons: Add Task & Delete Task */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0 ml-2">
             {params.taskId === '10' && (
               <CreateTeam userMail={session?.user?.email} teamId={params.teamId} />
             )}
@@ -433,7 +522,7 @@ const Page = ({ params }) => {
           {activeTab === 'task' && pageState.task ? (
             <>
               {/* Task Details Header */}
-              <div className="bg-zinc-900/50 p-4 border-b border-zinc-800/50 flex items-center space-x-3">
+              <div className="bg-zinc-900/50 p-4 border-b border-zinc-800/50 flex items-center space-x-3 shrink-0">
                 <img
                   className='w-10 h-10 rounded-full border border-zinc-800 bg-zinc-900'
                   src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${pageState.task.assigner_id}`}
@@ -443,107 +532,81 @@ const Page = ({ params }) => {
               </div>
 
               {/* Task Details Content */}
-              <div className='flex-grow overflow-y-auto p-6 space-y-6'>
+              <div className='flex-grow overflow-y-auto p-5 space-y-6'>
                 <div>
-                  <h2 className='text-sm font-semibold text-zinc-400 mb-2 uppercase tracking-wider'>Description</h2>
-                  <p className='text-zinc-300 leading-relaxed max-h-[15vh] overflow-y-auto pr-1'>{pageState.task.descrption}</p>
+                  <h2 className='text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wider'>Description</h2>
+                  <p className='text-sm text-zinc-300 leading-relaxed bg-zinc-900/10 p-3 rounded-lg border border-zinc-900'>{pageState.task.descrption}</p>
                 </div>
 
+                {/* Status selector (Dropdown) */}
                 <div>
-                  <h2 className='text-sm font-semibold text-zinc-400 mb-2 uppercase tracking-wider'>Status</h2>
-                  <div className="grid grid-cols-3 bg-zinc-950 border border-zinc-900 p-1.5 rounded-xl w-full gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleStatusChange("ongoing")}
-                      className={`py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
-                        pageState.task.status === "ongoing"
-                          ? "bg-amber-500 text-zinc-950 font-bold shadow-md shadow-amber-500/10"
-                          : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30"
-                      }`}
-                    >
-                      Ongoing
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusChange("completed")}
-                      className={`py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
-                        pageState.task.status === "completed"
-                          ? "bg-emerald-500 text-zinc-950 font-bold shadow-md shadow-emerald-500/10"
-                          : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30"
-                      }`}
-                    >
-                      Completed
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusChange("missed")}
-                      className={`py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
-                        pageState.task.status === "missed"
-                          ? "bg-rose-500 text-zinc-950 font-bold shadow-md shadow-rose-500/10"
-                          : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30"
-                      }`}
-                    >
-                      Missed
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <h2 className='text-sm font-semibold text-zinc-400 mb-2 uppercase tracking-wider'>Priority</h2>
-                  <div className='p-3 bg-zinc-900/80 rounded-md border border-zinc-800/50'>
-                    {pageState.task.priority === 0 && pageState.task.status === 'completed' && (
-                      <div className="flex items-center text-green-500">
-                        <CheckCheck className="mr-2 h-4 w-4" />
-                        <span className="font-semibold">Task Completed Successfully!</span>
+                  <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Status</h2>
+                  <Select
+                    value={pageState.task.status}
+                    onValueChange={handleStatusChange}
+                  >
+                    <SelectTrigger className="w-full h-10 bg-[#18181b] border border-zinc-900 text-zinc-200 text-xs rounded-xl focus:ring-1 focus:ring-purple-500/50 px-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${statusConfig[pageState.task.status]?.color || 'bg-zinc-500'}`}></span>
+                        <SelectValue placeholder="Select status" />
                       </div>
-                    )}
-                    {pageState.task.priority === 0 && pageState.task.status === 'missed' && (
-                      <div className="flex items-center text-red-500">
-                        <CircleAlert className="mr-2 h-4 w-4" />
-                        <span className="font-semibold">Deadline Missed - Take Action!</span>
-                      </div>
-                    )}
-                    {pageState.task.priority === 1 && (
-                      <div className="flex items-center text-blue-400">
-                        <ArrowDown className="mr-2 h-4 w-4" />
-                        <span>Can be addressed later</span>
-                      </div>
-                    )}
-                    {pageState.task.priority === 2 && (
-                      <div className="flex items-center text-orange-400">
-                        <ArrowRight className="mr-2 h-4 w-4" />
-                        <span>Requires attention soon</span>
-                      </div>
-                    )}
-                    {pageState.task.priority === 3 && (
-                      <div className="flex items-center text-purple-400">
-                        <ArrowUp className="mr-2 h-4 w-4" />
-                        <span>Immediate action needed</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <h2 className='text-sm font-semibold text-zinc-400 mb-2 uppercase tracking-wider'>Assigned To</h2>
-                  <div className='space-y-2 max-h-32 overflow-y-auto pr-1'>
-                    {Array.isArray(assignedData?.tasksWithAssignedImages) && assignedData.tasksWithAssignedImages.length > 0 ? (
-                      assignedData.tasksWithAssignedImages.map((assigned, index) => (
-                        <div key={index} className="flex items-center space-x-2 bg-zinc-900/40 p-2 rounded-lg border border-zinc-850">
-                          <div className="relative shrink-0">
-                            <img className='w-6 h-6 rounded-full bg-zinc-850' src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${assigned.user_id}`} alt="" />
-                            <span className={`absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-[#09090b] ${
-                              isAssigneeOnlineById(assigned.user_id) ? 'bg-emerald-500' : 'bg-zinc-600'
-                            }`} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border border-zinc-900 text-white text-xs rounded-xl">
+                      {Object.entries(statusConfig).map(([value, cfg]) => (
+                        <SelectItem key={value} value={value} className="focus:bg-zinc-900 focus:text-white rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.color}`}></span>
+                            <span>{cfg.label}</span>
                           </div>
-                          <span className="text-sm text-zinc-300">{assigned.assigner_name}</span>
-                        </div>
-                      ))
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Priority */}
+                <div>
+                  <h2 className='text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2'>Priority</h2>
+                  <div className='p-3 bg-zinc-900/40 border border-zinc-900 rounded-lg'>
+                    {pageState.task.status === 'completed' ? (
+                      <div className="flex items-center text-emerald-500 text-xs font-medium">
+                        <CheckCheck className="mr-2 h-4 w-4" />
+                        <span>Task Completed Successfully</span>
+                      </div>
+                    ) : pageState.task.status === 'missed' ? (
+                      <div className="flex items-center text-rose-500 text-xs font-medium">
+                        <CircleAlert className="mr-2 h-4 w-4 animate-bounce" />
+                        <span>Deadline Missed - Take Action</span>
+                      </div>
                     ) : (
-                      <span className="text-sm text-zinc-500">No one is assigned to this task</span>
+                      <>
+                        {pageState.task.priority === 1 && (
+                          <div className="flex items-center text-blue-400 text-xs">
+                            <ArrowDown className="mr-2 h-4 w-4" />
+                            <span>Can be addressed later</span>
+                          </div>
+                        )}
+                        {pageState.task.priority === 2 && (
+                          <div className="flex items-center text-orange-400 text-xs">
+                            <ArrowRight className="mr-2 h-4 w-4" />
+                            <span>Requires attention soon</span>
+                          </div>
+                        )}
+                        {pageState.task.priority === 3 && (
+                          <div className="flex items-center text-purple-400 text-xs">
+                            <ArrowUp className="mr-2 h-4 w-4" />
+                            <span>Immediate action needed</span>
+                          </div>
+                        )}
+                        {(!pageState.task.priority || pageState.task.priority === 0) && (
+                          <span className="text-zinc-500 text-xs">No priority set</span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
 
-                {/* Subtasks Checklist */}
+                {/* Subtask Accordion Checklist */}
                 <div className="border-t border-zinc-800/60 pt-4">
                   <SubtaskList 
                     taskId={pageState.task.task_id} 
@@ -561,15 +624,15 @@ const Page = ({ params }) => {
               </div>
 
               {/* Task Details Footer */}
-              <div className='bg-zinc-900 border-t border-zinc-800 p-4 flex justify-between items-center text-xs'>
+              <div className='bg-zinc-900 border-t border-zinc-800 p-4 flex justify-between items-center text-[10px] uppercase font-bold tracking-wider shrink-0 text-zinc-500'>
                 <div>
-                  <span className='text-zinc-500 block mb-0.5'>Created on</span>
-                  <p className='text-white font-semibold'>{pageState.task.start_d.split(' ')[0]}</p>
+                  <span className='block mb-0.5 text-zinc-500'>Created</span>
+                  <p className='text-zinc-300 font-semibold'>{pageState.task.start_d.split(' ')[0]}</p>
                 </div>
                 <CreateTeam userMail={session?.user?.email} teamId={params.teamId} />
                 <div className='text-right'>
-                  <span className='text-zinc-500 block mb-0.5'>Due Date</span>
-                  <p className='text-white font-semibold'>{pageState.task.end_d ? pageState.task.end_d.split('T')[0] : 'Not set'}</p>
+                  <span className='block mb-0.5 text-zinc-500'>Due Date</span>
+                  <p className='text-zinc-300 font-semibold'>{pageState.task.end_d ? pageState.task.end_d.split('T')[0] : 'Not set'}</p>
                 </div>
               </div>
             </>
@@ -592,17 +655,16 @@ const Page = ({ params }) => {
           ) : (
             <div className="flex flex-col items-center justify-center h-full bg-[#09090b] text-zinc-400 p-8 text-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-zinc-700 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              <h3 className="text-lg font-medium text-white mb-1">No Task Selected</h3>
-              <p className="text-xs text-zinc-500 mb-6 max-w-xs">Select a task from the list or create a new one to view its details.</p>
-              <CreateTeam userMail={session?.user?.email} teamId={params.teamId} />
+              <h3 className="text-md font-medium text-zinc-500 mb-1">No group active</h3>
+              <p className="text-xs text-zinc-600 max-w-xs mx-auto">Select a task or switch tabs to interact with group members and view notifications.</p>
             </div>
           )}
         </div>
       </div>
-    </>
+    </div>
   );
-};
+}
 
 export default Page;

@@ -71,6 +71,13 @@
       "when": 1784319856798,
       "tag": "0009_cynical_vin_gonzales",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1785758459675,
+      "tag": "0010_cuddly_skullbuster",
+      "breakpoints": true
     }
   ]
 }

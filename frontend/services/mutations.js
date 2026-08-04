@@ -683,3 +683,32 @@ export function useUpdateMemberRoleMutation() {
     retry: false,
   });
 }
+
+// Create Feedback
+export function useCreateFeedbackMutation() {
+  return useMutation({
+    mutationKey: ["createFeedback"],
+    mutationFn: async ({ rating, comment, userGmail }) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/feedback`,
+          JSON.stringify({
+            rating,
+            comment,
+            user_gmail: userGmail,
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    retry: false,
+  });
+}

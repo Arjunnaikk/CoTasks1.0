@@ -35,7 +35,7 @@ export function Create({ userMail, listId }) {
     description: '',
     priority: 1,
     end_d: getTomorrow().toISOString(),
-    taskStatus: 'ongoing',
+    taskStatus: 'backlog',
     userMail: userMail,
     listName: listId
   })
@@ -65,7 +65,7 @@ export function Create({ userMail, listId }) {
       description: '',
       priority: 1,
       end_d: getTomorrow().toISOString(),
-      taskStatus: 'ongoing',
+      taskStatus: 'backlog',
       userMail: userMail,
       listName: listId
     })
@@ -126,79 +126,86 @@ export function Create({ userMail, listId }) {
         <SheetTrigger asChild>
           <Button
             variant="outline"
-            className='bg-zinc-950 text-zinc-100 rounded-[10px] hover:bg-zinc-900 border-[1px] hover:text-zinc-100 w-[11vw] p-0'
+            className="bg-zinc-950 text-zinc-100 rounded-xl hover:bg-zinc-900 border border-zinc-800 hover:text-zinc-100 w-[11vw] min-w-[70px] max-w-[120px] p-0 active:scale-95 duration-150 transition-transform"
           >
-            <Plus />
+            <Plus className="w-4 h-4" />
           </Button>
         </SheetTrigger>
-        <SheetContent className='bg-black text-white'>
-          <form onSubmit={handleSubmit}>
-            <SheetHeader>
-              <SheetTitle className='text-white text-2xl font-bold'>Create a task</SheetTitle>
+        <SheetContent className="bg-zinc-950 border-l border-zinc-900 text-white p-6 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+            <SheetHeader className="text-left">
+              <SheetTitle className="text-white text-xl font-bold tracking-tight">Create personal task</SheetTitle>
+              <SheetDescription className="text-zinc-500 text-xs">Define a new pending task for this list workspace.</SheetDescription>
             </SheetHeader>
-            <div className="flex flex-col gap-8 mt-5">
-            <div className="flex flex-col items-start gap-2">
-        <Label htmlFor="title" className="text-right">
-          Title
-        </Label>
-        <div className="w-full">
-          <Input
-            onChange={handleChange}
-            id="title"
-            name="title"
-            value={form.title}
-            className="w-full bg-black text-white"
-            required
-            maxLength={50}
-          />
-          {form.title.length >= 40 &&
-          <p className={`text-xs mt-1 ${form.title.length >= 50 ? "text-red-500" : "text-gray-400"}`}>
-            {form.title.length}/{50} characters
-          </p>
-          }
-        </div>
-      </div>
-      
-      <div className="flex flex-col items-start gap-2">
-        <Label htmlFor="description" className="text-right">
-          Description
-        </Label>
-        <div className="w-full">
-          <Textarea
-            onChange={handleChange}
-            id="description"
-            name="description"
-            value={form.description}
-            className="w-full bg-black text-white"
-            maxLength={300}
-          />
-          {form.description.length >= 250 &&
-          <p className={`text-xs mt-1 ${form.description.length >= 300 ? "text-red-500" : "text-gray-400"}`}>
-            {form.description.length}/{300} characters
-          </p>
-          }
-        </div>
-      </div>
-              <div>
+            <div className="flex flex-col gap-5 mt-2">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="title" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                  Title
+                </Label>
+                <div className="w-full">
+                  <Input
+                    onChange={handleChange}
+                    id="title"
+                    name="title"
+                    value={form.title}
+                    className="w-full bg-[#18181b]/50 border-zinc-850 rounded-xl text-xs text-white focus-visible:ring-1 focus-visible:ring-purple-500/50"
+                    placeholder="Enter task name..."
+                    required
+                    maxLength={50}
+                  />
+                  {form.title.length >= 40 && (
+                    <p className={`text-[10px] mt-1 text-right ${form.title.length >= 50 ? "text-red-500" : "text-zinc-500"}`}>
+                      {form.title.length} / 50 characters
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="description" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                  Description
+                </Label>
+                <div className="w-full">
+                  <Textarea
+                    onChange={handleChange}
+                    id="description"
+                    name="description"
+                    value={form.description}
+                    placeholder="Add detailed task notes..."
+                    className="w-full bg-[#18181b]/50 border-zinc-850 rounded-xl text-xs text-white focus-visible:ring-1 focus-visible:ring-purple-500/50 resize-none h-28"
+                    maxLength={300}
+                  />
+                  {form.description.length >= 250 && (
+                    <p className={`text-[10px] mt-1 text-right ${form.description.length >= 300 ? "text-red-500" : "text-zinc-500"}`}>
+                      {form.description.length} / 300 characters
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1 block">Priority</label>
                 <SelectDemo
                   value={form.priority}
                   onValueChange={handlePriorityChange}
                 />
               </div>
-              <div>
-              <DatePickerDemo
-                  value={form.end_d ? new Date(form.end_d) : null} // Convert ISO string back to Date
-                  onChange={handleDateChange}
-              />
 
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1 block">Due Date & Time</label>
+                <DatePickerDemo
+                  value={form.end_d ? new Date(form.end_d) : null}
+                  onChange={handleDateChange}
+                />
               </div>
-              <SheetFooter>
+
+              <SheetFooter className="pt-2">
                 <Button
                   type="submit"
-                  className='border border-zinc-800 bg-black w-full'
+                  className="bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl w-full text-xs font-bold transition-all active:scale-95 duration-150 h-9 p-0"
                   disabled={mutation.isLoading}
                 >
-                  {mutation.isLoading ? 'Creating...' : 'Create Task'}
+                  {mutation.isLoading ? "Creating..." : "Create Task"}
                 </Button>
               </SheetFooter>
             </div>
@@ -206,7 +213,7 @@ export function Create({ userMail, listId }) {
         </SheetContent>
       </Sheet>
     </div>
-  )
+  );
 }
 
-export default Create
+export default Create;

@@ -10,18 +10,16 @@ export const metadata = {
   description: " A collaborative task management platform to streamline team workflows and boost productivity.",
 };
 
-
-
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-screen overflow-hidden">
       <body
-        className={`antialiased`}
+        className="antialiased bg-zinc-950 bg-grid-pattern h-screen overflow-hidden text-zinc-100 selection:bg-white selection:text-black font-sans flex flex-col"
       >
         <Providers>
         <ProvidersQuery>
           <Navbar />
-          <div className="flex flex-row">
+          <div className="flex flex-row flex-1 overflow-hidden w-full min-w-0">
             <Sidebar />
             {children}
             <Toaster />

@@ -15,9 +15,13 @@ const Card = ({ myTask, keye, listName }) => {
     const task = myTask.newTask[keye];
 
     const STATUS_COLORS = {
-        'missed': 'bg-rose-500',
+        'backlog': 'bg-zinc-650',
+        'in_progress': 'bg-sky-500',
         'ongoing': 'bg-amber-500',
+        'in_review': 'bg-purple-500',
+        'blocked': 'bg-rose-900',
         'completed': 'bg-emerald-500',
+        'missed': 'bg-rose-500',
         'default': 'bg-zinc-500',
     };
     
@@ -31,7 +35,7 @@ const Card = ({ myTask, keye, listName }) => {
     return (
         <div 
             onClick={handleClick} 
-            className="group w-[35vw] min-h-[160px] bg-zinc-950/30 border border-zinc-900 hover:border-zinc-800 hover:bg-zinc-900/10 rounded-xl flex flex-col justify-between p-5 transition-all duration-300 cursor-pointer relative overflow-hidden"
+            className="group w-full min-h-[140px] bg-gradient-to-br from-zinc-900/50 to-zinc-950/70 border border-zinc-900 hover:border-zinc-800/80 hover:from-zinc-900/40 hover:to-zinc-950/50 rounded-2xl flex flex-col justify-between p-5 transition-all duration-200 cursor-pointer relative overflow-hidden hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5"
         >
             <div className="flex justify-between items-start gap-4">
                 <div className="space-y-1 max-w-[80%]">

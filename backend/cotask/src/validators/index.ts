@@ -24,7 +24,7 @@ export const createListValidator = zValidator('json', createListSchema);
 export const createTaskSchema = z.object({
   title: z.string().max(50),
   description: z.string().max(300),
-  status: z.string().max(10).optional(),
+  status: z.string().max(15).optional(),
   end_d: z.string().max(30).optional(),
   priority: z.number().int().max(5).optional(),
   user_gmail: z.string().max(200).email(),

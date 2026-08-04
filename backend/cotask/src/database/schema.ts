@@ -23,7 +23,7 @@ export const task = sqliteTable("task", {
   task_id: integer('task_id', {mode : 'number'}).primaryKey({ autoIncrement:true}),
   title: text('title').notNull(),
   descrption: text('description').notNull(),
-  status: text("status",{ enum: ["completed", "ongoing", "missed"] }).notNull().default("ongoing"),
+  status: text("status",{ enum: ["backlog", "in_progress", "ongoing", "in_review", "blocked", "completed", "missed"] }).notNull().default("backlog"),
   start_d: text().default(sql`(CURRENT_TIMESTAMP)`),
   end_d: integer( "end_d",{ mode: 'timestamp' }),
   priority: integer("priority").default(0),
@@ -116,6 +116,13 @@ export const activity_log = sqliteTable("activity_log", {
   action: text("action").notNull(),
   description: text("description").notNull(),
   created_at: text("created_at").notNull(),
+});
+
+export const user_fcm_token = sqliteTable("user_fcm_token", {
+  token_id: integer('token_id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
+  user_id: integer("user_id").references(() => user.user_id, { onDelete: 'cascade' }),
+  token: text("token").notNull().unique(),
+  created_at: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 });
 
 

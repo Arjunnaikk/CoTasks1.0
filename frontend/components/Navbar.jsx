@@ -29,7 +29,7 @@ const Navbar = () => {
   }, [])
 
   return (
-    <nav className='sticky top-0 z-50 w-full h-14 bg-zinc-950/60 border-b border-zinc-900 backdrop-blur-md transition-all duration-300 px-6 flex justify-between items-center text-white'>
+    <nav className="sticky top-0 z-50 w-full h-14 bg-zinc-950/80 border-b border-zinc-900 backdrop-blur-md transition-all duration-200 px-6 flex justify-between items-center text-white shadow-sm shadow-black/10 shrink-0">
       <Link href="/" className="flex items-center gap-2 group">
         <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center font-black text-black group-hover:scale-105 transition-transform duration-200">
           C
