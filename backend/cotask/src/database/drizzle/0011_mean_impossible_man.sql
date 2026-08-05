@@ -1,0 +1,1 @@
+ALTER TABLE `task` ADD `gcal_event_id` text;

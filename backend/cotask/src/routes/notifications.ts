@@ -86,19 +86,29 @@ export const checkAndSendNotifications = async (db: any, env: any) => {
 
 	// Helper to send alerts (FCM + Email Simulators)
 	const dispatchAlerts = async (targetTask: any, alertType: 'approaching' | 'missed') => {
-		// Find assigner and assigned users
-		const assigneeGmail = targetTask.assigner_id
-			? (await db.select({ gmail: user.gmail }).from(user).where(eq(user.user_id, targetTask.assigner_id)))[0]?.gmail
-			: null;
+		// Find all assignees for this task
+		const assignees = await db.select({ 
+				user_id: user.user_id,
+				gmail: user.gmail 
+			})
+			.from(task_assigned)
+			.innerJoin(user, eq(task_assigned.user_id, user.user_id))
+			.where(eq(task_assigned.task_id, targetTask.task_id));
 
-		if (!assigneeGmail) return;
+		let targetUsers = assignees;
 
-		// Fetch user's active FCM tokens
-		const tokens = await db.select({ token: user_fcm_token.token })
-			.from(user_fcm_token)
-			.where(eq(user_fcm_token.user_id, targetTask.assigner_id));
+		// If no assignees are found, fall back to the task creator (assigner)
+		if (targetUsers.length === 0 && targetTask.assigner_id) {
+			const creator = (await db.select({ 
+				user_id: user.user_id,
+				gmail: user.gmail 
+			}).from(user).where(eq(user.user_id, targetTask.assigner_id)))[0];
+			if (creator) {
+				targetUsers.push(creator);
+			}
+		}
 
-		const fcmTokens = tokens.map((t: any) => t.token);
+		if (targetUsers.length === 0) return;
 
 		// Email formatting
 		const title = alertType === 'approaching' ? `Task Due Soon: ${targetTask.title}` : `Task Missed/Overdue: ${targetTask.title}`;
@@ -106,26 +116,124 @@ export const checkAndSendNotifications = async (db: any, env: any) => {
 			? `Hello! The task "${targetTask.title}" is due soon. Due Date: ${new Date(targetTask.end_d).toLocaleString()}.\nDescription: ${targetTask.descrption}`
 			: `Hello! The task "${targetTask.title}" has missed its due date. Due Date was: ${new Date(targetTask.end_d).toLocaleString()}.\nDescription: ${targetTask.descrption}`;
 
-		// Send Email (simulate calling Resend: / nodemailer / email APIs)
-		console.log(`[EMAIL DISPATCH] To: ${assigneeGmail} | Subject: ${title}`);
-		console.log(`[EMAIL CONTENT]\n${bodyText}\n`);
+		for (const targetUser of targetUsers) {
+			const targetGmail = targetUser.gmail;
+			if (!targetGmail) continue;
 
-		// Send FCM (simulate Firebase push)
-		if (fcmTokens.length > 0) {
-			console.log(`[PUSH DISPATCH] Sending FCM alert to ${fcmTokens.length} devices for user ${assigneeGmail}`);
-			for (const fcmTok of fcmTokens) {
-				console.log(`[FCM PAYLOAD] To: ${fcmTok} | Body: ${title}`);
+			// Fetch target user's email preference
+			const [userPrefs] = await db.select({
+				email_reminders_enabled: user.email_reminders_enabled,
+				personal_email_reminders_enabled: user.personal_email_reminders_enabled,
+				group_email_reminders_enabled: user.group_email_reminders_enabled,
+			}).from(user).where(eq(user.user_id, targetUser.user_id));
+
+			let shouldSendEmail = true;
+			if (userPrefs) {
+				if (!userPrefs.email_reminders_enabled) {
+					console.log(`[EMAIL DISPATCH] Suppressed for ${targetGmail} (master toggle off)`);
+					shouldSendEmail = false;
+				} else {
+					const isGroupTask = !!targetTask.team_id;
+					if (isGroupTask && !userPrefs.group_email_reminders_enabled) {
+						console.log(`[EMAIL DISPATCH] Suppressed for ${targetGmail} (group toggle off)`);
+						shouldSendEmail = false;
+					}
+					if (!isGroupTask && !userPrefs.personal_email_reminders_enabled) {
+						console.log(`[EMAIL DISPATCH] Suppressed for ${targetGmail} (personal toggle off)`);
+						shouldSendEmail = false;
+					}
+				}
 			}
-		}
 
-		notificationsSent.push({
-			task_id: targetTask.task_id,
-			title: targetTask.title,
-			assignee: assigneeGmail,
-			alertType,
-			email_sent: true,
-			fcm_count: fcmTokens.length,
-		});
+			// Fetch user's active FCM tokens
+			const tokens = await db.select({ token: user_fcm_token.token })
+				.from(user_fcm_token)
+				.where(eq(user_fcm_token.user_id, targetUser.user_id));
+
+			const fcmTokens = tokens.map((t: any) => t.token);
+
+			let emailSent = false;
+			console.log(`[DEBUG] env keys: ${Object.keys(env || {}).join(', ')}`);
+			console.log(`[DEBUG] env.RESEND_SECRET_KEY type: ${typeof env?.RESEND_SECRET_KEY}, value exists: ${!!env?.RESEND_SECRET_KEY}`);
+			if (shouldSendEmail && env && env.RESEND_SECRET_KEY) {
+				try {
+					const response = await fetch('https://api.resend.com/emails', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'Authorization': `Bearer ${env.RESEND_SECRET_KEY}`
+						},
+						body: JSON.stringify({
+							from: 'CoTask <onboarding@resend.dev>',
+							to: [targetGmail],
+							subject: title,
+							html: `
+								<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #09090b; border: 1px solid #27272a; border-radius: 16px; color: #f4f4f5;">
+									<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #27272a;">
+										<div style="height: 28px; width: 28px; border-radius: 8px; background-color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #000000; font-size: 16px;">
+											C
+										</div>
+										<span style="font-weight: 700; font-size: 18px; letter-spacing: -0.025em; color: #ffffff;">CoTask Alert</span>
+									</div>
+									<div style="margin-bottom: 24px;">
+										<p style="font-size: 14px; line-height: 1.6; color: #a1a1aa; margin: 0 0 16px 0;">Hello,</p>
+										<p style="font-size: 14px; line-height: 1.6; color: #e4e4e7; margin: 0 0 20px 0;">
+											${alertType === 'approaching' ? 'One of your assigned tasks is due soon. Please review the details below:' : 'A task assigned to you has missed its deadline:'}
+										</p>
+										<div style="padding: 20px; background-color: #18181b; border: 1px solid #27272a; border-left: 4px solid ${alertType === 'approaching' ? '#0ea5e9' : '#f43f5e'}; border-radius: 12px; margin-bottom: 20px;">
+											<h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700; color: #ffffff;">${targetTask.title}</h3>
+											<p style="margin: 0 0 12px 0; font-size: 13px; line-height: 1.5; color: #d4d4d8;">${targetTask.descrption}</p>
+											<div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${alertType === 'approaching' ? '#38bdf8' : '#fb7185'};">
+												Due Date: ${new Date(targetTask.end_d).toLocaleString()}
+											</div>
+										</div>
+									</div>
+									<div style="border-top: 1px solid #27272a; padding-top: 16px; font-size: 11px; text-align: center; color: #71717a;">
+										This is an automated notification from your CoTask workspace.
+									</div>
+								</div>
+							`
+						})
+					});
+					if (response.ok) {
+						emailSent = true;
+						console.log(`[EMAIL DISPATCH] Resend API successful for ${targetGmail}`);
+					} else {
+						const errText = await response.text();
+						console.error(`[EMAIL DISPATCH] Resend API failed: ${response.status} - ${errText}`);
+					}
+				} catch (err) {
+					console.error(`[EMAIL DISPATCH] Resend fetch exception:`, err);
+				}
+			}
+
+			if (!emailSent) {
+				if (shouldSendEmail) {
+					// Fallback: Console simulator
+					console.log(`[EMAIL DISPATCH] To: ${targetGmail} | Subject: ${title}`);
+					console.log(`[EMAIL CONTENT]\n${bodyText}\n`);
+				} else {
+					console.log(`[EMAIL DISPATCH] Skipped email sending for ${targetGmail} per settings.`);
+				}
+			}
+
+			// Send FCM (simulate Firebase push)
+			if (fcmTokens.length > 0) {
+				console.log(`[PUSH DISPATCH] Sending FCM alert to ${fcmTokens.length} devices for user ${targetGmail}`);
+				for (const fcmTok of fcmTokens) {
+					console.log(`[FCM PAYLOAD] To: ${fcmTok} | Body: ${title}`);
+				}
+			}
+
+			notificationsSent.push({
+				task_id: targetTask.task_id,
+				title: targetTask.title,
+				assignee: targetGmail,
+				alertType,
+				email_sent: true,
+				fcm_count: fcmTokens.length,
+			});
+		}
 	};
 
 	// Process approaching

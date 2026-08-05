@@ -74,7 +74,7 @@ app.post('/myTask/fetch', fetchTaskValidator, async (c) => {
 // Create a task
 app.post('/myTask/create', createTaskValidator, async (c) => {
 	const db = database(c.env.DB);
-	const { title, description, status, end_d, priority, user_gmail, list_name } = await c.req.json() as any;
+	const { title, description, status, end_d, priority, user_gmail, list_name, gcal_event_id } = await c.req.json() as any;
 
 	try {
 		const [reqUser] = await db.select({ user_id: user.user_id }).from(user).where(eq(user.gmail, user_gmail));
@@ -108,6 +108,7 @@ app.post('/myTask/create', createTaskValidator, async (c) => {
 			priority: priority ?? 0,
 			assigner_id: reqUser.user_id,
 			list_id: reqList.list_id,
+			gcal_event_id: gcal_event_id ?? null,
 		}).returning();
 
 		return c.json({ ...newTask, msg: 'task created' });

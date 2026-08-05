@@ -10,6 +10,9 @@ export const user = sqliteTable("user", {
   password: text('password'),
   phone: integer('phone'),
   last_active_at: text("last_active_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  email_reminders_enabled: integer('email_reminders_enabled', { mode: 'boolean' }).default(true).notNull(),
+  personal_email_reminders_enabled: integer('personal_email_reminders_enabled', { mode: 'boolean' }).default(true).notNull(),
+  group_email_reminders_enabled: integer('group_email_reminders_enabled', { mode: 'boolean' }).default(true).notNull(),
 });
 
 export const list = sqliteTable("list", {
@@ -30,6 +33,7 @@ export const task = sqliteTable("task", {
   assigner_id: integer("assigner_id").references(() => user.user_id, { onDelete : 'cascade' }),
   list_id : integer("list_id").references(() => list.list_id, { onDelete : 'cascade' }),
   team_id : integer("team_id").references(() => team.team_id, { onDelete : 'cascade' }),
+  gcal_event_id: text("gcal_event_id"),
 });
 
 export const task_assigned = sqliteTable("task_assigned", {

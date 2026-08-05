@@ -20,6 +20,8 @@ import DatePickerDemo from "./DatePicker"
 import { useCreateMyTeamTaskMutation } from "@/services/mutations"
 import { useGetTeamMembersQuery } from "@/services/queries"
 import { useToast } from "@/hooks/use-toast"
+import { useSession } from "next-auth/react"
+import { createCalendarEvent } from "@/lib/gcalendar"
 
 const getTomorrow = () => {
   const tomorrow = new Date();
@@ -30,6 +32,7 @@ const getTomorrow = () => {
 
 export function Create({ userMail, teamId }) {
   const { toast } = useToast();
+  const { data: session } = useSession();
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -41,6 +44,7 @@ export function Create({ userMail, teamId }) {
     assign_to: []
   })
 
+  const [addToCalendar, setAddToCalendar] = useState(true)
   const [open, setOpen] = useState(false)
   const mutation = useCreateMyTeamTaskMutation()
   const { data: teamMembersData } = useGetTeamMembersQuery(teamId)
@@ -77,6 +81,7 @@ export function Create({ userMail, teamId }) {
       teamName: teamId,
       assign_to: []
     })
+    setAddToCalendar(true)
   }
 
   const handleSubmit = async (e) => {
@@ -88,10 +93,26 @@ export function Create({ userMail, teamId }) {
     }
 
     try {
+      console.log("[DEBUG] session in CreateTeam:", session);
+      let gcalEventId = null;
+      if (addToCalendar && session?.accessToken) {
+        console.log("[DEBUG] calling createCalendarEvent with token:", session.accessToken.substring(0, 10) + "...");
+        gcalEventId = await createCalendarEvent(session.accessToken, {
+          title: form.title,
+          descrption: form.description,
+          start_d: new Date().toISOString(),
+          end_d: form.end_d,
+        }, form.assign_to);
+        console.log("[DEBUG] createCalendarEvent returned gcalEventId:", gcalEventId);
+      } else {
+        console.log("[DEBUG] Skipping Google Calendar event creation.");
+      }
+
       const result = await mutation.mutateAsync(
         {
           ...form,
           userArray: form.assign_to,
+          gcal_event_id: gcalEventId,
         },
         {
           onSuccess: (data) => {
@@ -247,6 +268,19 @@ export function Create({ userMail, teamId }) {
                     </div>
                   </div>
                 )}
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-zinc-900/40 border border-zinc-900 rounded-xl mt-2 select-none">
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-zinc-200">Google Calendar Sync</span>
+                  <span className="text-[10px] text-zinc-500">Add this task as a calendar event</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={addToCalendar}
+                  onChange={(e) => setAddToCalendar(e.target.checked)}
+                  className="w-4 h-4 rounded border-zinc-800 bg-zinc-900 text-purple-650 focus:ring-purple-500/50 focus:ring-offset-zinc-950 accent-purple-500 cursor-pointer"
+                />
               </div>
 
               <SheetFooter className="pt-2">

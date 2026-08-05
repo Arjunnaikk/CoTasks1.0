@@ -28,7 +28,8 @@ export const createTaskSchema = z.object({
   end_d: z.string().max(30).optional(),
   priority: z.number().int().max(5).optional(),
   user_gmail: z.string().max(200).email(),
-  list_name: z.string().max(30)
+  list_name: z.string().max(30),
+  gcal_event_id: z.string().max(200).nullable().optional()
 });
 
 

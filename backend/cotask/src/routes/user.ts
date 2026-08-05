@@ -124,4 +124,61 @@ app.post('/user/ping', pingValidator, async (c) => {
 	}
 });
 
+// Fetch user settings
+const fetchSettingsSchema = z.object({
+	user_gmail: z.string().email(),
+});
+const fetchSettingsValidator = zValidator('json', fetchSettingsSchema);
+
+app.post('/user/settings/fetch', fetchSettingsValidator, async (c) => {
+	const db = database(c.env.DB);
+	const { user_gmail } = await c.req.json() as any;
+
+	try {
+		const [userData] = await db.select({
+			email_reminders_enabled: user.email_reminders_enabled,
+			personal_email_reminders_enabled: user.personal_email_reminders_enabled,
+			group_email_reminders_enabled: user.group_email_reminders_enabled,
+		}).from(user).where(eq(user.gmail, user_gmail));
+
+		if (!userData) {
+			return c.json({ msg: "User not found" }, 404);
+		}
+
+		return c.json(userData);
+	} catch (error) {
+		console.error("Fetch settings error:", error);
+		return c.json({ msg: "couldn't fetch settings" }, 500);
+	}
+});
+
+// Update user settings
+const updateSettingsSchema = z.object({
+	user_gmail: z.string().email(),
+	email_reminders_enabled: z.boolean(),
+	personal_email_reminders_enabled: z.boolean(),
+	group_email_reminders_enabled: z.boolean(),
+});
+const updateSettingsValidator = zValidator('json', updateSettingsSchema);
+
+app.post('/user/settings/update', updateSettingsValidator, async (c) => {
+	const db = database(c.env.DB);
+	const { user_gmail, email_reminders_enabled, personal_email_reminders_enabled, group_email_reminders_enabled } = await c.req.json() as any;
+
+	try {
+		await db.update(user)
+			.set({
+				email_reminders_enabled,
+				personal_email_reminders_enabled,
+				group_email_reminders_enabled,
+			})
+			.where(eq(user.gmail, user_gmail));
+
+		return c.json({ msg: "Settings updated successfully" });
+	} catch (error) {
+		console.error("Update settings error:", error);
+		return c.json({ msg: "couldn't update settings" }, 500);
+	}
+});
+
 export default app;

@@ -236,4 +236,82 @@ app.post('/team/role/update', updateRoleValidator, async (c) => {
 	}
 });
 
+// Leave a team
+const leaveTeamSchema = z.object({
+	user_gmail: z.string().email().max(200),
+	team_name: z.string().max(50),
+});
+const leaveTeamValidator = zValidator('json', leaveTeamSchema);
+
+app.post('/team/leave', leaveTeamValidator, async (c) => {
+	const db = database(c.env.DB);
+	const { user_gmail, team_name } = await c.req.json() as any;
+
+	try {
+		const [reqUser] = await db.select({ user_id: user.user_id }).from(user).where(eq(user.gmail, user_gmail));
+		if (!reqUser) return c.json({ msg: "User not found" }, 404);
+
+		const decodedTeamName = decodeURIComponent(team_name);
+		const [reqTeam] = await db.select({ team_id: team.team_id }).from(team).where(eq(team.title, decodedTeamName));
+		if (!reqTeam) return c.json({ msg: "Team not found" }, 404);
+
+		// Get user's membership details
+		const [membership] = await db.select().from(user_team).where(
+			and(
+				eq(user_team.team_id, reqTeam.team_id),
+				eq(user_team.user_id, reqUser.user_id)
+			)
+		);
+		if (!membership) return c.json({ msg: "You are not a member of this group" }, 400);
+
+		// Check all members in the team
+		const allMembers = await db.select().from(user_team).where(eq(user_team.team_id, reqTeam.team_id));
+
+		if (membership.role === 'admin') {
+			// Check if there is another admin
+			const otherAdmins = allMembers.filter(m => m.user_id !== reqUser.user_id && m.role === 'admin');
+			
+			if (otherAdmins.length === 0) {
+				// If there are other members, they must appoint one as admin first
+				const otherMembers = allMembers.filter(m => m.user_id !== reqUser.user_id);
+				if (otherMembers.length > 0) {
+					return c.json({ 
+						msg: "You are the sole admin. You must appoint someone else as admin before leaving the group." 
+					}, 400);
+				} else {
+					// User is the last person, clean up the team entirely
+					await db.delete(user_team).where(eq(user_team.team_id, reqTeam.team_id));
+					await db.delete(team).where(eq(team.team_id, reqTeam.team_id));
+					return c.json({ msg: "Left group. Since you were the last member, the group has been deleted." });
+				}
+			}
+		}
+
+		// Remove the user from the team
+		await db.delete(user_team).where(
+			and(
+				eq(user_team.team_id, reqTeam.team_id),
+				eq(user_team.user_id, reqUser.user_id)
+			)
+		);
+
+		// Delete task assignments for this user in this team's tasks
+		const teamTasks = await db.select({ task_id: task.task_id }).from(task).where(eq(task.team_id, reqTeam.team_id));
+		const taskIds = teamTasks.map(t => t.task_id);
+		if (taskIds.length > 0) {
+			await db.delete(task_assigned).where(
+				and(
+					eq(task_assigned.user_id, reqUser.user_id),
+					inArray(task_assigned.task_id, taskIds)
+				)
+			);
+		}
+
+		return c.json({ msg: "Successfully left the group" });
+	} catch (error) {
+		console.error("Leave team error:", error);
+		return c.json({ msg: "Failed to leave group" }, 500);
+	}
+});
+
 export default app;

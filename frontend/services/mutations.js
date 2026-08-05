@@ -128,7 +128,7 @@ export function useCreateMyTaskMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["createTask"],
-    mutationFn: async ({ title, description, priority, end_d, taskStatus, userMail, listName }) => {
+    mutationFn: async ({ title, description, priority, end_d, taskStatus, userMail, listName, gcal_event_id }) => {
       try {
         const response = await axios.post(
           `${API_BASE_URL}/myTask/create`,
@@ -140,6 +140,7 @@ export function useCreateMyTaskMutation() {
             priority,
             user_gmail: userMail,
             list_name: listName,
+            gcal_event_id
           }),
           {
             headers: { 
@@ -166,7 +167,7 @@ export function useCreateMyTeamTaskMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["createTeamTask"],
-    mutationFn: async ({ title, description, priority, end_d, taskStatus, userMail, teamName , userArray }) => {
+    mutationFn: async ({ title, description, priority, end_d, taskStatus, userMail, teamName , userArray, gcal_event_id }) => {
       try {
         const response = await axios.post(
           `${API_BASE_URL}/teamTask/create`,
@@ -178,7 +179,8 @@ export function useCreateMyTeamTaskMutation() {
             priority,
             user_gmail: userMail,
             team_name: teamName,
-            user_array:userArray
+            user_array:userArray,
+            gcal_event_id
           }),
           {
             headers: { 
@@ -708,6 +710,73 @@ export function useCreateFeedbackMutation() {
         console.error("API call error:", error);
         throw error;
       }
+    },
+    retry: false,
+  });
+}
+
+// Update User Settings
+export function useUpdateUserSettingsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updateUserSettings"],
+    mutationFn: async ({ userGmail, emailRemindersEnabled, personalEmailRemindersEnabled, groupEmailRemindersEnabled }) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/user/settings/update`,
+          JSON.stringify({
+            user_gmail: userGmail,
+            email_reminders_enabled: emailRemindersEnabled,
+            personal_email_reminders_enabled: personalEmailRemindersEnabled,
+            group_email_reminders_enabled: groupEmailRemindersEnabled,
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getUserSettings", variables.userGmail] });
+    },
+    retry: false,
+  });
+}
+
+// Leave Team
+export function useLeaveTeamMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["leaveTeam"],
+    mutationFn: async ({ userGmail, teamName }) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/team/leave`,
+          JSON.stringify({
+            user_gmail: userGmail,
+            team_name: teamName,
+          }),
+          {
+            headers: { 
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["getTeam", variables.userGmail] });
+      queryClient.invalidateQueries({ queryKey: ["getTeamMembers", variables.teamName] });
     },
     retry: false,
   });

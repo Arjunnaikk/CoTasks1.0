@@ -35,6 +35,7 @@ const createTeamTaskSchema = z.object({
 	user_gmail: z.string().max(200).email(),
 	team_name: z.string().max(50),
 	user_array: z.array(z.string().max(200).email()),
+	gcal_event_id: z.string().max(200).nullable().optional(),
 });
 const createTeamTaskValidator = zValidator('json', createTeamTaskSchema);
 
@@ -71,7 +72,7 @@ app.post('/teamTask/fetch', fetchTeamTaskValidator, async (c) => {
 // Create a task for a team
 app.post('/teamTask/create', createTeamTaskValidator, async (c) => {
 	const db = database(c.env.DB);
-	const { title, description, status, end_d, priority, user_gmail, team_name, user_array } = await c.req.json() as any;
+	const { title, description, status, end_d, priority, user_gmail, team_name, user_array, gcal_event_id } = await c.req.json() as any;
 
 	try {
 		// Find the team
@@ -99,6 +100,7 @@ app.post('/teamTask/create', createTeamTaskValidator, async (c) => {
 			priority: priority ?? 0,
 			assigner_id: assigner.user_id,
 			team_id: reqTeam.team_id,
+			gcal_event_id: gcal_event_id ?? null,
 		}).returning();
 
 		const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);

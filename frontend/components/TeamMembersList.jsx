@@ -2,14 +2,15 @@
 
 import React from 'react';
 import { useGetTeamMembersQuery } from '@/services/queries';
-import { useUpdateMemberRoleMutation } from '@/services/mutations';
-import { Loader2, Shield, User } from 'lucide-react';
+import { useUpdateMemberRoleMutation, useLeaveTeamMutation } from '@/services/mutations';
+import { Loader2, Shield, User, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const TeamMembersList = ({ teamName, currentUserEmail }) => {
   const { toast } = useToast();
   const { data, isLoading, error } = useGetTeamMembersQuery(teamName);
   const updateRoleMutation = useUpdateMemberRoleMutation();
+  const leaveTeamMutation = useLeaveTeamMutation();
 
   const members = data?.members || [];
 
@@ -49,6 +50,47 @@ const TeamMembersList = ({ teamName, currentUserEmail }) => {
       toast({
         title: "Error",
         description: err.response?.data?.msg || "Failed to update member role.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLeaveGroup = async () => {
+    const currentUser = members.find(m => m.gmail === currentUserEmail);
+    if (!currentUser) return;
+
+    const isAdmin = currentUser.role === 'admin';
+    const otherMembers = members.filter(m => m.gmail !== currentUserEmail);
+    const otherAdmins = otherMembers.filter(m => m.role === 'admin');
+
+    if (isAdmin && otherMembers.length > 0 && otherAdmins.length === 0) {
+      alert("You are the sole Admin. You must appoint someone else as Admin before leaving the group.");
+      return;
+    }
+
+    const confirmMessage = otherMembers.length === 0
+      ? "Are you sure you want to leave? Since you are the only member left, this group will be deleted."
+      : "Are you sure you want to leave this group?";
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      await leaveTeamMutation.mutateAsync({
+        userGmail: currentUserEmail,
+        teamName,
+      });
+
+      toast({
+        title: "Success",
+        description: "Successfully left the group.",
+      });
+
+      window.location.href = "/mygroups";
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: err.response?.data?.msg || "Failed to leave the group.",
         variant: "destructive",
       });
     }
@@ -116,12 +158,12 @@ const TeamMembersList = ({ teamName, currentUserEmail }) => {
               <div className="flex items-center gap-2">
                 {/* Role Badge */}
                 {member.role === 'admin' ? (
-                  <span className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-purple-950/40 border border-purple-500/30 text-purple-300 font-semibold select-none">
+                  <span className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-purple-950/40 border border-purple-550/30 text-purple-300 font-semibold select-none">
                     <Shield className="w-2.5 h-2.5 text-purple-400" />
                     Admin
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-medium select-none">
+                  <span className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-850 text-zinc-400 font-medium select-none">
                     <User className="w-2.5 h-2.5 text-zinc-500" />
                     Member
                   </span>
@@ -133,7 +175,7 @@ const TeamMembersList = ({ teamName, currentUserEmail }) => {
                     type="button"
                     onClick={() => handleRoleToggle(member)}
                     disabled={updateRoleMutation.isPending}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-[10px] px-2 py-1 rounded bg-zinc-950 border border-zinc-800 hover:border-purple-500/50 hover:bg-purple-950/20 text-zinc-400 hover:text-purple-300 transition-all active:scale-95 disabled:opacity-50"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-[10px] px-2 py-1 rounded bg-zinc-950 border border-zinc-850 hover:border-purple-500/50 hover:bg-purple-950/20 text-zinc-400 hover:text-purple-300 transition-all active:scale-95 disabled:opacity-50"
                   >
                     {member.role === 'admin' ? 'Revoke Admin' : 'Make Admin'}
                   </button>
@@ -143,6 +185,21 @@ const TeamMembersList = ({ teamName, currentUserEmail }) => {
           );
         })}
       </div>
+
+      {/* Footer / Leave Group Action */}
+      {currentUserMembership && (
+        <div className="p-4 border-t border-zinc-900 bg-zinc-950/20 flex flex-col gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleLeaveGroup}
+            disabled={leaveTeamMutation.isPending}
+            className="w-full py-2.5 px-4 rounded-xl bg-red-950/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:bg-red-950/30 font-semibold text-xs transition-all active:scale-95 duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            {leaveTeamMutation.isPending ? "Leaving Group..." : "Leave Group"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

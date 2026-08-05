@@ -31,6 +31,7 @@ import { CheckCheck } from "lucide-react";
 import { CircleAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AlertDialogDemo from "@/components/AlertDialogDemo";
+import { deleteCalendarEvent, updateCalendarEvent } from "@/lib/gcalendar";
 
 const ErrorComponent = ({ error }) => <div className="text-red-500 p-4">Error: {error?.message || "An error occurred"}</div>;
 
@@ -231,6 +232,19 @@ const Page = ({ params }) => {
         task_name: pageState.task.title,
         status: newStatus,
       });
+
+      if (session?.accessToken && pageState.task.gcal_event_id) {
+        const displayTitle = newStatus === 'completed'
+          ? `[Completed] ${pageState.task.title}`
+          : pageState.task.title;
+        await updateCalendarEvent(session.accessToken, pageState.task.gcal_event_id, {
+          title: displayTitle,
+          descrption: pageState.task.descrption,
+          start_d: pageState.task.start_d,
+          end_d: pageState.task.end_d,
+        });
+      }
+
       setPageState((prev) => {
         const updatedTasks = prev.tasks.map((t) =>
           t.task_id === prev.task.task_id ? { ...t, status: newStatus } : t
@@ -251,6 +265,10 @@ const Page = ({ params }) => {
     if (!pageState.task) return;
 
     try {
+      if (session?.accessToken && pageState.task.gcal_event_id) {
+        await deleteCalendarEvent(session.accessToken, pageState.task.gcal_event_id);
+      }
+
       await deleteTeamTaskMutation.mutateAsync({
         teamName: params.teamId,
         taskId: pageState.task.task_id,

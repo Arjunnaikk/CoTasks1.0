@@ -252,3 +252,20 @@ export function useGetDueTeamTasksQuery(userGmail) {
     enabled: !!userGmail,
   });
 }
+
+// Get user settings
+export function useGetUserSettingsQuery(userGmail) {
+  return useQuery({
+    queryKey: ["getUserSettings", userGmail],
+    queryFn: async () => {
+      const response = await axios.post(
+        `${API_BASE_URL}/user/settings/fetch`,
+        {
+          user_gmail: userGmail
+        }
+      );
+      return response.data;
+    },
+    enabled: !!userGmail,
+  });
+}

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import ProfileSection from "@/components/ProfileSection";
 import FeedbackSection from "@/components/FeedbackSection";
+import NotificationSection from "@/components/NotificationSection";
 
 const Page = () => {
   const [selectedSection, setSelectedSection] = useState("profile");
@@ -13,6 +14,8 @@ const Page = () => {
         return <ProfileSection />;
       case "feedback":
         return <FeedbackSection />;
+      case "notifications":
+        return <NotificationSection />;
       default:
         return <div className="text-white text-sm">Select a section</div>;
     }
@@ -38,6 +41,16 @@ const Page = () => {
             }`}
           >
             Profile Settings
+          </button>
+          <button
+            onClick={() => setSelectedSection("notifications")}
+            className={`py-2.5 px-4 rounded-xl w-full text-left text-xs font-semibold transition-all duration-200 ${
+              selectedSection === "notifications"
+                ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50"
+            }`}
+          >
+            Notification Settings
           </button>
           <button
             onClick={() => setSelectedSection("feedback")}
