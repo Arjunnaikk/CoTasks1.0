@@ -374,6 +374,9 @@ const Page = ({ params }) => {
           >
             <SlidersHorizontal className="h-4 w-4" />
           </Button>
+
+          {/* Create Team Task Button */}
+          <CreateTeam userMail={session?.user?.email} teamId={params.teamId} />
         </div>
 
         {/* Collapsible Filters Panel */}
@@ -457,7 +460,19 @@ const Page = ({ params }) => {
               ))}
             </div>
           ) : (
-            <EmptyCard />
+            <EmptyCard 
+              createButton={
+                <CreateTeam 
+                  userMail={session?.user?.email} 
+                  teamId={params.teamId} 
+                  customTrigger={
+                    <Button className="bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl px-5 h-9 text-xs font-bold transition-all active:scale-95 duration-150 shadow-md">
+                      Create Task
+                    </Button>
+                  } 
+                />
+              } 
+            />
           )}
         </div>
       </div>
@@ -564,10 +579,7 @@ const Page = ({ params }) => {
                     onValueChange={handleStatusChange}
                   >
                     <SelectTrigger className="w-full h-10 bg-[#18181b] border border-zinc-900 text-zinc-200 text-xs rounded-xl focus:ring-1 focus:ring-purple-500/50 px-3">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${statusConfig[pageState.task.status]?.color || 'bg-zinc-500'}`}></span>
-                        <SelectValue placeholder="Select status" />
-                      </div>
+                      <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-950 border border-zinc-900 text-white text-xs rounded-xl">
                       {Object.entries(statusConfig).map(([value, cfg]) => (
@@ -650,7 +662,11 @@ const Page = ({ params }) => {
                 <CreateTeam userMail={session?.user?.email} teamId={params.teamId} />
                 <div className='text-right'>
                   <span className='block mb-0.5 text-zinc-500'>Due Date</span>
-                  <p className='text-zinc-300 font-semibold'>{pageState.task.end_d ? pageState.task.end_d.split('T')[0] : 'Not set'}</p>
+                  <p className='text-zinc-300 font-semibold'>
+                    {pageState.task.end_d 
+                      ? new Date(pageState.task.end_d).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) 
+                      : 'Not set'}
+                  </p>
                 </div>
               </div>
             </>

@@ -56,13 +56,13 @@ export const checkAndSendNotifications = async (db: any, env: any) => {
 
 	const notificationsSent: any[] = [];
 
-	// 1. Fetch tasks within due date (uncompleted AND end_d is in the next 24 hours)
+	// 1. Fetch active tasks with future due date that haven't been notified yet
 	const upcomingTasks = await db.select().from(task).where(
 		and(
 			inArray(task.status, ['backlog', 'in_progress', 'ongoing', 'blocked', 'in_review']),
 			isNotNull(task.end_d),
-			lt(task.end_d, next24Hours),
-			gte(task.end_d, now)
+			gte(task.end_d, now),
+			eq(task.notified_due, false)
 		)
 	);
 
@@ -236,9 +236,29 @@ export const checkAndSendNotifications = async (db: any, env: any) => {
 		}
 	};
 
-	// Process approaching
+	// Process approaching with dynamic alert thresholds
 	for (const t of upcomingTasks) {
-		await dispatchAlerts(t, 'approaching');
+		const createdTime = t.start_d ? new Date(t.start_d.replace(' ', 'T') + 'Z').getTime() : now.getTime();
+		const dueTime = new Date(t.end_d).getTime();
+		const tTotal = dueTime - createdTime;
+		const tLeft = dueTime - now.getTime();
+
+		let wAlert = 0;
+		const dayMs = 24 * 60 * 60 * 1000;
+		if (tTotal > 3 * dayMs) {
+			wAlert = dayMs; // > 3 days -> alert 1 day before
+		} else if (tTotal >= dayMs) {
+			wAlert = 12 * 60 * 60 * 1000; // 1-3 days -> alert 12 hours before
+		} else {
+			wAlert = 0.25 * tTotal; // < 24 hours -> alert at 25% of duration before
+		}
+
+		if (tLeft <= wAlert) {
+			await dispatchAlerts(t, 'approaching');
+			await db.update(task)
+				.set({ notified_due: true })
+				.where(eq(task.task_id, t.task_id));
+		}
 	}
 
 	// Process missed

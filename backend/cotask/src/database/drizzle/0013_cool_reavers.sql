@@ -1,0 +1,1 @@
+ALTER TABLE `task` ADD `notified_due` integer DEFAULT false NOT NULL;

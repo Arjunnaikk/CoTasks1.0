@@ -30,7 +30,7 @@ const getTomorrow = () => {
   return tomorrow;
 };
 
-export function Create({ userMail, teamId }) {
+export function Create({ userMail, teamId, customTrigger }) {
   const { toast } = useToast();
   const { data: session } = useSession();
   const [form, setForm] = useState({
@@ -146,12 +146,14 @@ export function Create({ userMail, teamId }) {
     <div className="">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            className="bg-zinc-950 text-zinc-100 rounded-xl hover:bg-zinc-900 border border-zinc-800 hover:text-zinc-100 w-[11vw] min-w-[70px] max-w-[120px] p-0 active:scale-95 duration-150 transition-transform"
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
+          {customTrigger ? customTrigger : (
+            <Button
+              variant="outline"
+              className="bg-[#18181b] border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white flex items-center justify-center h-9 w-9 p-0 rounded-md shrink-0 active:scale-95 duration-150 transition-all"
+            >
+              <Plus className="w-4 h-4 text-purple-450" />
+            </Button>
+          )}
         </SheetTrigger>
         <SheetContent className="bg-zinc-950 border-l border-zinc-900 text-white p-6 overflow-y-auto">
           <form onSubmit={handleSubmit} className="space-y-6 mt-4">

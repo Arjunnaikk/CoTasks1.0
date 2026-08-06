@@ -13,10 +13,9 @@ import {
 export function DatePickerDemo({ value, onChange }) {
   const isValidDate = value instanceof Date && !isNaN(value);
 
-  // Get tomorrow's date only (to disable past/today dates)
-  const tomorrowDateOnly = React.useMemo(() => {
+  // Get today's date only (to disable past dates, but allow today/future dates)
+  const todayDateOnly = React.useMemo(() => {
     const d = new Date();
-    d.setDate(d.getDate() + 1);
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
@@ -33,13 +32,24 @@ export function DatePickerDemo({ value, onChange }) {
     if (!selectedDate) return;
     
     const newDate = new Date(selectedDate);
+    const now = new Date();
+    const isToday = newDate.toDateString() === now.toDateString();
+
     if (isValidDate) {
       // Keep existing hours/minutes
       newDate.setHours(value.getHours(), value.getMinutes(), 0, 0);
     } else {
-      // Default to 12:00 PM tomorrow
+      // Default to 12:00 PM
       newDate.setHours(12, 0, 0, 0);
     }
+
+    // If today is selected and the set time is in the past, default to next hour
+    if (isToday && newDate.getTime() < now.getTime()) {
+      const nextHour = new Date();
+      nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+      newDate.setHours(nextHour.getHours(), nextHour.getMinutes(), 0, 0);
+    }
+
     onChange(newDate);
   };
 
@@ -76,7 +86,7 @@ export function DatePickerDemo({ value, onChange }) {
               mode="single"
               selected={value}
               onSelect={handleDateSelect}
-              disabled={(date) => date < tomorrowDateOnly}
+              disabled={(date) => date < todayDateOnly}
               initialFocus
               className="bg-zinc-950 text-white"
             />
